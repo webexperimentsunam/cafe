@@ -1,0 +1,1801 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png+xml" href="/icon/fp black.png">
+    <title>Experiment</title>
+
+    
+    
+    
+    
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+      }
+    </style>
+  <link href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" rel="stylesheet" type="text/css"><script src="https://unpkg.com/jspsych@8.2.2"></script><script src="https://unpkg.com/jspsych-expbuilder-plugin-dynamic@1.0.7/dist/index.iife.js"></script><link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@4.0.0/css/survey.css" data-dynamic-styles="true"><script src="https://unpkg.com/@jspsych/plugin-preload@2.1.0" data-dynamic-plugins="true"></script></head>
+  <body>
+    
+  
+
+<script id="expbuilder-runtime-guard">
+(function installExpBuilderRuntime(targetWindow, targetDocument) {
+  if (targetWindow.ExpBuilderRuntime) return targetWindow.ExpBuilderRuntime;
+
+  const events = [];
+  const errors = [];
+  let sequence = 0;
+  let lastErrorKey = "";
+  let lastErrorAt = 0;
+
+  function serializeError(value) {
+    if (value instanceof Error) {
+      return { name: value.name, message: value.message, stack: value.stack };
+    }
+    if (value && typeof value === "object") {
+      return {
+        name: value.name || "Error",
+        message: value.message || JSON.stringify(value),
+        stack: value.stack,
+      };
+    }
+    return { name: "Error", message: String(value), stack: undefined };
+  }
+
+  function emit(type, payload) {
+    const event = {
+      sequence: ++sequence,
+      timestamp: new Date().toISOString(),
+      type,
+      payload: payload || {},
+    };
+    events.push(event);
+    if (typeof targetWindow.CustomEvent === "function") {
+      targetWindow.dispatchEvent(
+        new targetWindow.CustomEvent("expbuilder:runtime-event", {
+          detail: event,
+        }),
+      );
+    }
+    return event;
+  }
+
+  function showError(errorRecord) {
+    let overlay = targetDocument.getElementById("expbuilder-runtime-error");
+    if (!overlay) {
+      overlay = targetDocument.createElement("div");
+      overlay.id = "expbuilder-runtime-error";
+      overlay.setAttribute("role", "alert");
+      overlay.setAttribute("aria-live", "assertive");
+      overlay.style.cssText = [
+        "position:fixed",
+        "inset:0",
+        "z-index:2147483647",
+        "display:flex",
+        "align-items:center",
+        "justify-content:center",
+        "padding:24px",
+        "background:#f7f7f7",
+        "color:#171717",
+        "font-family:system-ui,sans-serif",
+      ].join(";");
+      overlay.innerHTML =
+        '<div style="max-width:620px;text-align:center">' +
+        '<h1 style="font-size:24px;margin:0 0 12px">The experiment could not continue</h1>' +
+        '<p style="margin:0 0 8px">Please contact the experiment administrator.</p>' +
+        '<p data-runtime-error-code style="font-family:monospace;margin:0"></p>' +
+        "</div>";
+      targetDocument.body.appendChild(overlay);
+    }
+    const code = overlay.querySelector("[data-runtime-error-code]");
+    if (code) code.textContent = `Error reference: ${errorRecord.code}`;
+    const loading = targetDocument.getElementById("jspsych-loading-overlay");
+    if (loading) loading.style.display = "none";
+  }
+
+  function reportError(value, context) {
+    const serialized = serializeError(value);
+    const errorKey = `${serialized.name}:${serialized.message}`;
+    const now = Date.now();
+    if (errorKey === lastErrorKey && now - lastErrorAt < 50) {
+      return errors[errors.length - 1];
+    }
+    lastErrorKey = errorKey;
+    lastErrorAt = now;
+    const record = {
+      code: `RUNTIME-${String(errors.length + 1).padStart(3, "0")}`,
+      ...serialized,
+      context: context || {},
+    };
+    errors.push(record);
+    emit("runtime-error", record);
+    showError(record);
+    return record;
+  }
+
+  const api = {
+    version: 2,
+    events,
+    errors,
+    emit,
+    // Kept for generated artifacts created before the canonical emit API.
+    trace: emit,
+    reportError,
+    snapshot: () => ({ events: events.slice(), errors: errors.slice() }),
+  };
+  targetWindow.ExpBuilderRuntime = api;
+
+  const originalConsoleError = targetWindow.console.error.bind(
+    targetWindow.console,
+  );
+  targetWindow.console.error = function (...args) {
+    originalConsoleError(...args);
+    reportError(args[0], { source: "console.error", arguments: args.slice(1) });
+  };
+
+  targetWindow.addEventListener("error", function (event) {
+    if (event.target && event.target !== targetWindow) {
+      const target = event.target;
+      reportError(`Failed to load ${target.src || target.href || target.tagName}`,
+        { source: "resource", tagName: target.tagName });
+      return;
+    }
+    reportError(event.error || event.message, {
+      source: "window.error",
+      filename: event.filename,
+      line: event.lineno,
+      column: event.colno,
+    });
+  }, true);
+
+  targetWindow.addEventListener("unhandledrejection", function (event) {
+    reportError(event.reason, { source: "unhandledrejection" });
+  });
+
+  emit("runtime-ready", { version: api.version });
+  return api;
+})(window, document);
+</script><script id="generated-script">
+
+  // --- FileUploadResponseComponent endpoint (Firebase Cloud Function) ---
+  window.JSPSYCH_FILE_UPLOAD_ENDPOINT = 'https://us-central1-test-e4cf9.cloudfunctions.net/apiData'.replace('/apiData', '/uploadParticipantFile');
+  window.JSPSYCH_EXPERIMENT_ID = 'e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6';
+
+  // --- IndexedDB Wrapper para Batching con TTL (3 días) ---
+  const TrialDB = {
+    dbName: "expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:trials-v1",
+    storeName: 'trials',
+    db: null,
+    TTL_DAYS: 3,
+
+    async init() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(this.dbName, 1);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          this.db = request.result;
+          // Limpiar datos vencidos al iniciar
+          this.cleanExpiredData().catch(err => console.error('Error cleaning expired data:', err));
+          resolve(this.db);
+        };
+        
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(this.storeName)) {
+            const store = db.createObjectStore(this.storeName, { 
+              keyPath: 'id', 
+              autoIncrement: true 
+            });
+            store.createIndex('sessionId', 'sessionId', { unique: false });
+            store.createIndex('timestamp', 'timestamp', { unique: false });
+            store.createIndex('createdAt', 'createdAt', { unique: false });
+          }
+        };
+      });
+    },
+
+    async cleanExpiredData() {
+      if (!this.db) await this.init();
+      const now = Date.now();
+      const expirationTime = this.TTL_DAYS * 24 * 60 * 60 * 1000; // 3 días en ms
+      
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readwrite');
+        const store = transaction.objectStore(this.storeName);
+        const index = store.index('createdAt');
+        const request = index.openCursor();
+        
+        let deletedCount = 0;
+        
+        request.onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            const trial = cursor.value;
+            const age = now - (trial.createdAt || now);
+            
+            if (age > expirationTime) {
+              cursor.delete();
+              deletedCount++;
+            }
+            cursor.continue();
+          } else {
+            if (deletedCount > 0) {
+              console.log(`Cleaned ${deletedCount} expired trials from IndexedDB`);
+            }
+            resolve(deletedCount);
+          }
+        };
+        
+        request.onerror = () => reject(request.error);
+      });
+    },
+
+    async add(trial) {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readwrite');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.add({
+          ...trial,
+          timestamp: Date.now(),
+          createdAt: Date.now(),
+          sessionId: trialSessionId
+        });
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    },
+
+    async getAll() {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.getAll();
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    },
+
+    async count() {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.count();
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    },
+
+    async getN(n) {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.getAll(null, n);
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    },
+
+    async deleteN(n) {
+      if (!this.db) await this.init();
+      const trials = await this.getN(n);
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readwrite');
+        const store = transaction.objectStore(this.storeName);
+        
+        trials.forEach(trial => {
+          store.delete(trial.id);
+        });
+        
+        transaction.oncomplete = () => resolve(trials.length);
+        transaction.onerror = () => reject(transaction.error);
+      });
+    },
+
+    async clear() {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readwrite');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.clear();
+        
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    }
+  };
+
+  // --- Recolectar metadata del sistema ---
+  const getMetadata = () => {
+    const ua = navigator.userAgent;
+    let browserName = 'Unknown';
+    let browserVersion = 'Unknown';
+    
+    if (ua.indexOf('Firefox') > -1) {
+      browserName = 'Firefox';
+      browserVersion = ua.match(/Firefox\/(\d+\.\d+)/)?.[1] || 'Unknown';
+    } else if (ua.indexOf('Chrome') > -1) {
+      browserName = 'Chrome';
+      browserVersion = ua.match(/Chrome\/(\d+\.\d+)/)?.[1] || 'Unknown';
+    } else if (ua.indexOf('Safari') > -1) {
+      browserName = 'Safari';
+      browserVersion = ua.match(/Version\/(\d+\.\d+)/)?.[1] || 'Unknown';
+    } else if (ua.indexOf('Edg') > -1) {
+      browserName = 'Edge';
+      browserVersion = ua.match(/Edg\/(\d+\.\d+)/)?.[1] || 'Unknown';
+    }
+    
+    let osName = 'Unknown';
+    if (ua.indexOf('Win') > -1) osName = 'Windows';
+    else if (ua.indexOf('Mac') > -1) osName = 'macOS';
+    else if (ua.indexOf('Linux') > -1) osName = 'Linux';
+    else if (ua.indexOf('Android') > -1) osName = 'Android';
+    else if (ua.indexOf('iOS') > -1) osName = 'iOS';
+    
+    return {
+      browser: browserName,
+      browserVersion: browserVersion,
+      os: osName,
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height,
+      screenResolution: `${window.screen.width}x${window.screen.height}`,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      language: navigator.language,
+      userAgent: ua,
+      startedAt: new Date().toISOString()
+    };
+  };
+  
+  const metadata = getMetadata();
+
+  // --- Firebase config ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyBQSjlsGoxGo78qWwbQBrNfL3-CKsoUnMY",
+    authDomain: "test-e4cf9.firebaseapp.com",
+    databaseURL: "https://test-e4cf9-default-rtdb.firebaseio.com",
+    projectId: "test-e4cf9",
+    storageBucket: "test-e4cf9.firebasestorage.app",
+    messagingSenderId: "414213417080",
+    appId: "1:414213417080:web:285e5fc5e2fbebd656e58d"
+  };
+
+  // --- Cargar Firebase SDK ---
+  if (typeof window.firebase === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
+    script.onload = () => {
+      const dbScript = document.createElement('script');
+      dbScript.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js';
+      dbScript.onload = () => { window._firebaseReady = true; };
+      document.head.appendChild(dbScript);
+    };
+    document.head.appendChild(script);
+  } else {
+    window._firebaseReady = true;
+  }
+
+  function waitForFirebase() {
+    return new Promise(resolve => {
+      if (window._firebaseReady) return resolve();
+      const interval = setInterval(() => {
+        if (window._firebaseReady) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 50);
+    });
+  }
+
+ 
+  const Uid = "C71v82VCu8YE7lyNhr02UmB8g5k1";
+
+  const _publicStorageKeys = {"sessionId":"expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:session-id","participant":"expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:participant-number","captchaPassed":"expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:captcha-passed","jumpRequest":"expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:jump-request","jumpReload":"expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:jump-reload","resumeTrial":"expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:resume-trial","jumpTarget":"expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:jump-to-trial","jumpContext":"expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:jump-context","trialDatabase":"expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:trials-v1"};
+
+  
+  
+  {
+    const readBranchRuleValue = function Bq(n,e){let t=e.column||"";if(!t&&e.componentIdx&&e.prop?t=`${e.componentIdx}_${e.prop}`:!t&&e.prop&&(t=e.prop),!t)return;if(n[t]!==void 0)return n[t];const r=t.split("_");if(r.length<2)return;const i=r[r.length-1],s=`${r.slice(0,-1).join("_")}_response`,a=n[s];if(!(!a||typeof a!="object"||Array.isArray(a)))return a[i]};
+const compareBranchValue = function Fq(n,e){if(Array.isArray(n)){const s=n.includes(e.value)||n.includes(String(e.value));return e.op==="=="?s:e.op==="!="?!s:!1}const t=Number.parseFloat(String(n)),r=Number.parseFloat(String(e.value)),i=!Number.isNaN(t)&&!Number.isNaN(r);switch(e.op){case"==":return i?t===r:String(n)===String(e.value);case"!=":return i?t!==r:String(n)!==String(e.value);case">":return i&&t>r;case"<":return i&&t<r;case">=":return i&&t>=r;case"<=":return i&&t<=r;default:return!1}};
+const evaluateBranchCondition = function Ffe(n,e){return Array.isArray(e.rules)?e.rules.every(t=>{const r=Bq(n,t);return r!==void 0&&Fq(r,t)}):!1};
+const findLatestTrialData = function jfe(n,e){for(let t=n.length-1;t>=0;t-=1){const r=n[t];if([r.builder_id,r.trial_id,r.loop_id].some(s=>String(s)===String(e)))return r}return null};
+const evaluateReferencedCondition = function iWe(n,e){return Array.isArray(e.rules)?e.rules.every(t=>{if(t.trialId===null||t.trialId===void 0)return!1;const r=jfe(n,t.trialId);if(!r)return!1;const i=Bq(r,t);return i!==void 0&&Fq(i,t)}):!1};
+const decideBranch = function sWe(n,e,t){if(!Array.isArray(e)||e.length===0)return{targetId:null,conditionId:null,customParameters:null,usedDefault:!1};const r=[];for(const i of t||[])Array.isArray(i)?r.push(...i):r.push(i);for(const i of r)if(!(!i||!Ffe(n,i)))return{targetId:i.nextTrialId??e[0],conditionId:i.id??null,customParameters:i.customParameters??null,usedDefault:i.nextTrialId===null||i.nextTrialId===void 0};return{targetId:e[0],conditionId:null,customParameters:null,usedDefault:!0}};
+const Bq = readBranchRuleValue;
+const Fq = compareBranchValue;
+const Ffe = evaluateBranchCondition;
+const jfe = findLatestTrialData;
+const iWe = evaluateReferencedCondition;
+const sWe = decideBranch;
+    window.ExpBuilderBranching = {
+      readRuleValue: readBranchRuleValue,
+      compareValue: compareBranchValue,
+      evaluateCondition: evaluateBranchCondition,
+      evaluateReferencedCondition: evaluateReferencedCondition,
+      decide: decideBranch
+    };
+  }
+  
+  
+  (() => {
+    const pendingOperations = new Set();
+    const idleWaiters = new Set();
+
+    const notifyIfIdle = () => {
+      if (pendingOperations.size > 0) return;
+      for (const resolve of idleWaiters) resolve();
+      idleWaiters.clear();
+    };
+    const start = () => {
+      const token = Object.freeze({});
+      pendingOperations.add(token);
+      return token;
+    };
+    const finish = token => {
+      pendingOperations.delete(token);
+      notifyIfIdle();
+    };
+
+    window.ExpBuilderPersistence = Object.freeze({
+      start,
+      finish,
+      track(operation) {
+        const token = start();
+        Promise.resolve(operation).then(
+          () => finish(token),
+          () => finish(token)
+        );
+        return operation;
+      },
+      pendingCount() {
+        return pendingOperations.size;
+      },
+      async whenIdle() {
+        while (pendingOperations.size > 0) {
+          await new Promise(resolve => idleWaiters.add(resolve));
+        }
+      }
+    });
+  })();
+
+  
+  {
+    const isRecord = function qx(n){return n!==null&&typeof n=="object"&&!Array.isArray(n)};
+const normalizeNavigationId = function AA(n){return n==null?null:String(n)};
+const isJumpRequest = function Ufe(n){if(!qx(n)||n.version!==2)return!1;const e=n.address,t=n.cursor,r=n.reloadGuard;return!qx(e)||!qx(t)||!qx(r)||typeof n.experimentRevision!="string"||typeof e.targetId!="string"&&typeof e.targetId!="number"||e.targetKind!=="trial"&&e.targetKind!=="loop"||e.targetOwnerId!==null&&typeof e.targetOwnerId!="string"||!Array.isArray(e.enterLoopIds)||!e.enterLoopIds.every(i=>typeof i=="string")||typeof t.nextEnterIndex!="number"||!Number.isInteger(t.nextEnterIndex)||t.nextEnterIndex<0||t.nextEnterIndex>e.enterLoopIds.length||typeof t.progress!="number"||!Number.isInteger(t.progress)||t.progress<0||r.observedProgress!==null&&(typeof r.observedProgress!="number"||!Number.isInteger(r.observedProgress)||r.observedProgress<0)?!1:(n.sourceId===null||typeof n.sourceId=="string")&&(n.sourceTrialIndex===null||typeof n.sourceTrialIndex=="string")&&qx(n.context)};
+const parseJumpRequest = function oWe(n){if(!n)return null;try{const e=JSON.parse(n);return Ufe(e)?e:null}catch{return null}};
+const createJumpRequest = function lWe(n,e,t,r,i={}){return{version:2,experimentRevision:e,address:{targetId:n.targetId,targetKind:n.targetKind,targetOwnerId:n.targetOwnerId===null?null:String(n.targetOwnerId),enterLoopIds:n.enterLoopIds.map(String)},sourceId:AA(t),sourceTrialIndex:AA(r),cursor:{nextEnterIndex:0,progress:0},reloadGuard:{observedProgress:null},context:{...i}}};
+const allowsJumpItem = function Hfe(n,e,t){const r=AA(e),i=n.address.enterLoopIds[n.cursor.nextEnterIndex]??null;return i!==null?t==="loop"&&r===i:r===AA(n.address.targetId)&&t===n.address.targetKind};
+const enterJumpItem = function uWe(n,e,t){if(!Hfe(n,e,t))return{allowed:!1,consumed:"none",segmentId:null,request:n};const r=n.address.enterLoopIds[n.cursor.nextEnterIndex]??null;return r!==null?{allowed:!0,consumed:"segment",segmentId:r,request:{...n,cursor:{nextEnterIndex:n.cursor.nextEnterIndex+1,progress:n.cursor.progress+1}}}:{allowed:!0,consumed:"target",segmentId:null,request:null}};
+const observeJumpReload = function cWe(n){const e=n.reloadGuard.observedProgress;return e!==null&&e===n.cursor.progress?{status:"stalled",request:n}:{status:"ready",request:{...n,cursor:{...n.cursor,nextEnterIndex:e===null?n.cursor.nextEnterIndex:0},reloadGuard:{observedProgress:n.cursor.progress}}}};
+const qx = isRecord;
+const AA = normalizeNavigationId;
+const Ufe = isJumpRequest;
+const oWe = parseJumpRequest;
+const lWe = createJumpRequest;
+const Hfe = allowsJumpItem;
+const uWe = enterJumpItem;
+const cWe = observeJumpReload;
+    window.ExpBuilderJumpProtocol = Object.freeze({
+      parse: parseJumpRequest,
+      create: createJumpRequest,
+      allows: allowsJumpItem,
+      enter: enterJumpItem,
+      observeReload: observeJumpReload
+    });
+  }
+  
+  
+  (() => {
+    const JUMP_REQUEST_KEY = "expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:jump-request";
+    const JUMP_RELOAD_KEY = "expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:jump-reload";
+    const RESUME_TRIAL_KEY = "expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:resume-trial";
+    const JUMP_TARGET_KEY = "expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:jump-to-trial";
+    const JUMP_CONTEXT_KEY = "expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:jump-context";
+    const persistedRows = [];
+    let pendingJump = null;
+    let activeRequest = null;
+    let deferredResume = null;
+    let invalidStoredJump = false;
+    let routingBlocked = false;
+    let reloadStarted = false;
+    let durabilityCheck = null;
+
+    const normalizeId = value =>
+      value === undefined || value === null ? null : String(value);
+    const emit = (type, payload) => {
+      window.ExpBuilderRuntime?.emit(type, payload || {});
+    };
+    const targetPayload = request => ({
+      ...(request?.context || {}),
+      sourceId: request?.sourceId ?? null,
+      sourceTrialIndex: request?.sourceTrialIndex ?? null,
+      targetId: request?.address?.targetId ?? null,
+      targetKind: request?.address?.targetKind ?? null,
+      progress: request?.cursor?.progress ?? null
+    });
+    const readStoredJump = () => {
+      const raw = localStorage.getItem(JUMP_REQUEST_KEY);
+      if (!raw) return { request: null, invalid: false };
+      const request = window.ExpBuilderJumpProtocol.parse(raw);
+      return { request, invalid: request === null };
+    };
+    const initialJump = readStoredJump();
+    activeRequest = initialJump.request;
+    invalidStoredJump = initialJump.invalid;
+
+    const persistActiveJump = request => {
+      if (request) {
+        localStorage.setItem(JUMP_REQUEST_KEY, JSON.stringify(request));
+      } else {
+        localStorage.removeItem(JUMP_REQUEST_KEY);
+      }
+    };
+    const clearJumpStorage = () => {
+      localStorage.removeItem(JUMP_REQUEST_KEY);
+      sessionStorage.removeItem(JUMP_RELOAD_KEY);
+      localStorage.removeItem(JUMP_TARGET_KEY);
+      sessionStorage.removeItem(JUMP_CONTEXT_KEY);
+    };
+    const invalidateNavigation = (reason, request) => {
+      const payload = targetPayload(request || activeRequest);
+      activeRequest = null;
+      pendingJump = null;
+      deferredResume = null;
+      invalidStoredJump = false;
+      routingBlocked = true;
+      clearJumpStorage();
+      emit('jump-invalidated', { ...payload, reason });
+    };
+    const currentManifest = () => {
+      const manifest = window.ExpBuilderExecutionAddresses;
+      return manifest && manifest.version === 2 ? manifest : null;
+    };
+    const resolveAddress = targetId => {
+      const manifest = currentManifest();
+      const normalizedTarget = normalizeId(targetId);
+      if (!manifest || normalizedTarget === null) return null;
+      return manifest.addressesByTarget?.[normalizedTarget] ?? null;
+    };
+    const requestMatchesManifest = (request, manifest) => {
+      const compiled = manifest.addressesByTarget?.[
+        String(request.address.targetId)
+      ];
+      if (!compiled) return false;
+      return compiled.targetKind === request.address.targetKind &&
+        compiled.targetOwnerId === request.address.targetOwnerId &&
+        compiled.enterLoopIds.length === request.address.enterLoopIds.length &&
+        compiled.enterLoopIds.every(
+          (loopId, index) => loopId === request.address.enterLoopIds[index]
+        );
+    };
+    const materializeResume = () => {
+      if (activeRequest || !deferredResume) return;
+      const manifest = currentManifest();
+      const address = resolveAddress(deferredResume.targetId);
+      if (!manifest || !address) {
+        invalidateNavigation('RESUME_ADDRESS_NOT_FOUND', null);
+        return;
+      }
+      activeRequest = window.ExpBuilderJumpProtocol.create(
+        address,
+        manifest.revision,
+        deferredResume.sourceId ?? null,
+        null,
+        {
+          navigationKind: 'resume',
+          routeKind: deferredResume.kind,
+          conditionId: deferredResume.conditionId ?? null
+        }
+      );
+      deferredResume = null;
+    };
+    const getActiveRequest = () => {
+      materializeResume();
+      if (!activeRequest) return null;
+      const manifest = currentManifest();
+      if (manifest && activeRequest.experimentRevision !== manifest.revision) {
+        invalidateNavigation('JUMP_REVISION_MISMATCH', activeRequest);
+        return null;
+      }
+      if (manifest && !requestMatchesManifest(activeRequest, manifest)) {
+        invalidateNavigation('JUMP_ADDRESS_NOT_FOUND', activeRequest);
+        return null;
+      }
+      return activeRequest;
+    };
+
+    const rowIds = row => [row?.builder_id, row?.trial_id, row?.loop_id]
+      .map(normalizeId)
+      .filter(value => value !== null);
+    const rowMatches = (row, request) => {
+      const sourceId = normalizeId(request.sourceId);
+      const sourceTrialIndex = normalizeId(request.sourceTrialIndex);
+      const rowTrialIndex = normalizeId(row?.trial_index);
+      if (sourceTrialIndex !== null && rowTrialIndex !== null &&
+          sourceTrialIndex !== rowTrialIndex) {
+        return false;
+      }
+      return sourceId === null || rowIds(row).includes(sourceId);
+    };
+    const reloadWhenDurable = () => {
+      if (!pendingJump || reloadStarted) return;
+      const persisted = persistedRows.find(row => rowMatches(row, pendingJump));
+      if (!persisted || durabilityCheck) return;
+      const jump = pendingJump;
+      durabilityCheck = (async () => {
+        await window.ExpBuilderPersistence?.whenIdle?.();
+        if (reloadStarted || pendingJump !== jump) return;
+        const durable = persistedRows.some(row => rowMatches(row, jump));
+        if (!durable) return;
+        reloadStarted = true;
+        emit('jump-persisted', targetPayload(jump));
+        window.location.reload();
+      })()
+        .catch(error => {
+          window.ExpBuilderRuntime?.reportError(error, {
+            source: 'jump-persistence-barrier'
+          });
+        })
+        .finally(() => {
+          durabilityCheck = null;
+        });
+    };
+
+    window.ExpBuilderNavigation = Object.freeze({
+      requestJump(targetId, context, sourceData, pauseRuntime) {
+        const manifest = currentManifest();
+        const address = resolveAddress(targetId);
+        if (!manifest || !address) {
+          throw new Error('Jump target has no compiled execution address');
+        }
+        const row = sourceData || {};
+        const request = window.ExpBuilderJumpProtocol.create(
+          address,
+          manifest.revision,
+          context?.sourceId ?? row.builder_id ?? row.trial_id ?? row.loop_id,
+          row.trial_index,
+          { ...(context || {}), navigationKind: 'jump' }
+        );
+        routingBlocked = false;
+        invalidStoredJump = false;
+        pendingJump = request;
+        activeRequest = request;
+        persistActiveJump(request);
+        sessionStorage.setItem(JUMP_RELOAD_KEY, '1');
+        localStorage.removeItem(JUMP_TARGET_KEY);
+        sessionStorage.removeItem(JUMP_CONTEXT_KEY);
+        emit('jump-requested', targetPayload(request));
+        if (typeof pauseRuntime === 'function') pauseRuntime();
+        reloadWhenDurable();
+      },
+      consumeReloadMarker() {
+        const marked = sessionStorage.getItem(JUMP_RELOAD_KEY) === '1';
+        sessionStorage.removeItem(JUMP_RELOAD_KEY);
+        sessionStorage.removeItem(JUMP_CONTEXT_KEY);
+        const legacyTarget = localStorage.getItem(JUMP_TARGET_KEY);
+        localStorage.removeItem(JUMP_TARGET_KEY);
+        if (invalidStoredJump || legacyTarget !== null) {
+          invalidateNavigation(
+            marked
+              ? 'JUMP_RELOAD_WITHOUT_VALID_REQUEST'
+              : 'JUMP_REQUEST_INVALID',
+            activeRequest
+          );
+          return { status: 'invalid', request: null };
+        }
+        if (!activeRequest) {
+          if (marked) {
+            invalidateNavigation(
+              'JUMP_RELOAD_WITHOUT_VALID_REQUEST',
+              activeRequest
+            );
+            return { status: 'invalid', request: null };
+          }
+          return { status: 'none', request: null };
+        }
+        const observed = window.ExpBuilderJumpProtocol.observeReload(
+          activeRequest
+        );
+        if (observed.status === 'stalled') {
+          invalidateNavigation('JUMP_STALLED', activeRequest);
+          return { status: 'stalled', request: null };
+        }
+        activeRequest = observed.request;
+        persistActiveJump(activeRequest);
+        emit('jump-reload-ready', targetPayload(activeRequest));
+        return {
+          status: marked ? 'ready' : 'active',
+          request: activeRequest
+        };
+      },
+      activateResume(decision) {
+        if (!decision?.targetId || activeRequest || pendingJump) return false;
+        deferredResume = { ...decision, targetId: String(decision.targetId) };
+        return true;
+      },
+      allowsItem(itemId, itemKind) {
+        if (routingBlocked) return false;
+        const request = getActiveRequest();
+        if (routingBlocked) return false;
+        if (!request) return null;
+        return window.ExpBuilderJumpProtocol.allows(request, itemId, itemKind);
+      },
+      enterItem(itemId, itemKind) {
+        if (routingBlocked) return false;
+        const request = getActiveRequest();
+        if (routingBlocked) return false;
+        if (!request) return null;
+        const result = window.ExpBuilderJumpProtocol.enter(
+          request,
+          itemId,
+          itemKind
+        );
+        if (!result.allowed) return false;
+        const navigationKind = request.context?.navigationKind ?? 'jump';
+        if (result.consumed === 'segment' && result.request) {
+          activeRequest = result.request;
+          if (navigationKind === 'jump') persistActiveJump(activeRequest);
+          emit('jump-segment-consumed', {
+            ...targetPayload(activeRequest),
+            segmentId: result.segmentId
+          });
+        } else if (result.consumed === 'target') {
+          activeRequest = null;
+          deferredResume = null;
+          if (navigationKind === 'jump') persistActiveJump(null);
+          emit(
+            navigationKind === 'resume'
+              ? 'resume-target-enter'
+              : 'jump-target-enter',
+            targetPayload(request)
+          );
+        }
+        return true;
+      },
+      onTrialPersisted(data) {
+        persistedRows.push(data || {});
+        reloadWhenDurable();
+      },
+      isTransitionPending() {
+        return pendingJump !== null;
+      },
+      clearTransientState() {
+        pendingJump = null;
+        activeRequest = null;
+        deferredResume = null;
+        invalidStoredJump = false;
+        routingBlocked = false;
+        reloadStarted = false;
+        localStorage.removeItem(RESUME_TRIAL_KEY);
+        clearJumpStorage();
+      }
+    });
+  })();
+
+  function _createResumeCheckpoint(trialData) {
+    const data = trialData || {};
+    const branches = data.branches || [];
+    const branchConditions = data.branchConditions || [];
+    const completedId = data.builder_id ?? data.trial_id ?? null;
+    const decision = branches.length > 0
+      ? window.ExpBuilderBranching.decide(data, branches, branchConditions)
+      : null;
+    const sequentialTarget = completedId === null
+      ? null
+      : window.ExpBuilderExecutionAddresses?.nextBySource?.[
+          String(completedId)
+        ] ?? null;
+    return {
+      version: 1,
+      completed: {
+        builderId: completedId,
+        trialIndex: data.trial_index ?? null
+      },
+      route: decision && decision.targetId !== null
+        ? {
+            kind: 'branch',
+            targetId: String(decision.targetId),
+            conditionId: decision.conditionId ?? null,
+            customParameters: decision.customParameters ?? null,
+            usedDefault: Boolean(decision.usedDefault)
+          }
+        : sequentialTarget !== null
+          ? {
+              kind: 'sequential',
+              targetId: String(sequentialTarget),
+              conditionId: null,
+              customParameters: null,
+              usedDefault: false
+            }
+          : null
+    };
+  }
+  function _resolveResumeBranch(resumeRaw) {
+    if (!resumeRaw) return null;
+    try {
+      const d = JSON.parse(resumeRaw);
+      if (d.version === 1) {
+        if (!d.route || d.route.targetId === undefined ||
+            d.route.targetId === null) {
+          return null;
+        }
+        return {
+          kind: d.route.kind === 'sequential' ? 'sequential' : 'branch',
+          sourceId: d.completed?.builderId ?? null,
+          targetId: String(d.route.targetId),
+          conditionId: d.route.conditionId ?? null,
+          customParameters: d.route.customParameters ?? null,
+          usedDefault: Boolean(d.route.usedDefault)
+        };
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+
+  // --- Session Name Configuration ---
+  const _SESSION_NAME_TOKENS = [{"id":"mu641vq8o0e","type":"customText","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"P","counterDigits":3},{"id":"mu641pspn93","type":"counter","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"","counterDigits":3},{"id":"mu641s68zbb","type":"date","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"","counterDigits":3},{"id":"mu641so0w3p","type":"time","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"","counterDigits":3}];
+  const _SESSION_NAME_SEPARATOR = "_";
+  function _generateSessionName(participantNumber) {
+    if (!_SESSION_NAME_TOKENS || _SESSION_NAME_TOKENS.length === 0) return null;
+    const _now = new Date();
+    const _pad = (n, len) => String(n).padStart(len != null ? len : 2, '0');
+    const _y = _now.getFullYear();
+    const _mo = _pad(_now.getMonth() + 1);
+    const _d = _pad(_now.getDate());
+    const _h = _pad(_now.getHours());
+    const _mi = _pad(_now.getMinutes());
+    const _s = _pad(_now.getSeconds());
+    const _parts = _SESSION_NAME_TOKENS.map(function(_token) {
+      switch (_token.type) {
+        case 'date': {
+          if (_token.dateFormat === 'YYYYMMDD') return _y + '' + _mo + _d;
+          if (_token.dateFormat === 'DD-MM-YYYY') return _d + '-' + _mo + '-' + _y;
+          if (_token.dateFormat === 'MM-DD-YYYY') return _mo + '-' + _d + '-' + _y;
+          return _y + '-' + _mo + '-' + _d;
+        }
+        case 'time': {
+          if (_token.timeFormat === 'HH-mm') return _h + '-' + _mi;
+          if (_token.timeFormat === 'HHmmss') return _h + '' + _mi + _s;
+          return _h + '-' + _mi + '-' + _s;
+        }
+        case 'randomAlpha': {
+          const _chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+          return Array.from({ length: _token.randomLength || 6 }, function() {
+            return _chars[Math.floor(Math.random() * _chars.length)];
+          }).join('');
+        }
+        case 'customText': return _token.customValue || '';
+        case 'counter': {
+          if (participantNumber == null) return '__CNT__';
+          return _pad(participantNumber, _token.counterDigits || 3);
+        }
+        default: return '';
+      }
+    }).filter(function(p) { return p !== ''; });
+    const _hasUnique = _SESSION_NAME_TOKENS.some(function(t) { return t.type === 'randomAlpha' || t.type === 'counter'; });
+    if (!_hasUnique && _parts.length > 0) {
+      const _rc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      _parts.push(Array.from({ length: 6 }, function() { return _rc[Math.floor(Math.random() * _rc.length)]; }).join(''));
+    }
+    return _parts.length > 0 ? _parts.join(_SESSION_NAME_SEPARATOR) : null;
+  }
+  function _sessionNameHasDynamic() {
+    return _SESSION_NAME_TOKENS.some(function(t) { return t.type === 'counter'; });
+  }
+
+  // Recuperar sessionId de localStorage o crear uno nuevo
+  let trialSessionId = localStorage.getItem(_publicStorageKeys.sessionId);
+  let storedParticipantNumber = localStorage.getItem(_publicStorageKeys.participant);
+  let isResuming = false;
+  
+  if (!trialSessionId) {
+    // If there are counter tokens, use UUID as initial ID (counter needs participantNumber).
+    // Otherwise use the generated name directly.
+    if (_sessionNameHasDynamic()) {
+      trialSessionId = (crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2, 10));
+    } else {
+      trialSessionId = _generateSessionName(null) || (crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2, 10));
+    }
+  } else {
+    isResuming = true;
+  }
+
+  // Set JSPSYCH_SESSION_ID immediately so file uploads always have the current sessionId
+  window.JSPSYCH_SESSION_ID = trialSessionId;
+
+  let participantNumber;
+
+  async function createSession() {
+    try {
+      const _preSessionName = !_sessionNameHasDynamic() ? _generateSessionName(null) : null;
+      const res = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "*/*" },
+        body: JSON.stringify({
+          experimentID: "e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6",
+          sessionId: trialSessionId,
+          uid: Uid,
+          batchSize: 0,
+          ...(_preSessionName ? { sessionName: _preSessionName } : {})
+        }),
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Error creating session:', errorText);
+        throw new Error(`Failed to create session: ${res.status} - ${errorText}`);
+      }
+      
+      const result = await res.json();
+      console.log('Session created:', result);
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to create session');
+      }
+      
+      return result.participantNumber;
+    } catch (error) {
+      console.error('Error in createSession:', error);
+      alert('Error creating session: ' + error.message);
+      throw error;
+    }
+  }
+
+  async function _updateSessionName(sessionId, sessionName) {
+    try {
+      await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "updateSessionName", experimentID: "e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6", sessionId, sessionName }),
+      });
+    } catch (e) {}
+  }
+
+  
+  // --- Loading overlay ---
+  // Read body background at runtime to match canvas styles injected via <style>
+  const _bgColor = (getComputedStyle(document.body).backgroundColor || '').trim();
+  const _overlayBg = _bgColor && _bgColor !== 'rgba(0, 0, 0, 0)' && _bgColor !== 'transparent' ? _bgColor : '#fff';
+  const _loadingOverlay = document.createElement('div');
+  _loadingOverlay.id = 'jspsych-loading-overlay';
+  _loadingOverlay.style.cssText = [
+    'position:fixed', 'inset:0', 'z-index:9999',
+    'display:flex', 'flex-direction:column',
+    'align-items:center', 'justify-content:center',
+    'background:' + _overlayBg, 'gap:20px',
+    'font-family:sans-serif'
+  ].join(';');
+  _loadingOverlay.innerHTML = `
+    <div style="width:48px;height:48px;border:5px solid #e0e0e0;border-top-color:#555;border-radius:50%;animation:_spin 0.8s linear infinite"></div>
+    <p id="jspsych-loading-msg" style="margin:0;color:#555;font-size:15px">Initializing experiment…</p>
+    <style>@keyframes _spin{to{transform:rotate(360deg)}}</style>
+  `;
+  document.body.appendChild(_loadingOverlay);
+
+  function _setLoadingMsg(msg) {
+    const el = document.getElementById('jspsych-loading-msg');
+    if (el) el.textContent = msg;
+  }
+
+  function _hideLoading() {
+    const el = document.getElementById('jspsych-loading-overlay');
+    if (el) el.remove();
+  }
+
+  function _clearCompletedTrialVisuals() {
+    [
+      'jspsych-dynamic-visual-bridge',
+      'jspsych-dynamic-persistent-visual'
+    ].forEach(function(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+  }
+
+  function _showSuccess() {
+    _hideLoading();
+    _clearCompletedTrialVisuals();
+    const overlay = document.createElement('div');
+    overlay.id = 'jspsych-loading-overlay';
+    overlay.style.cssText = [
+      'position:fixed', 'inset:0', 'z-index:9999',
+      'display:flex', 'flex-direction:column',
+      'align-items:center', 'justify-content:center',
+      'background:' + _overlayBg, 'gap:16px',
+      'font-family:sans-serif'
+    ].join(';');
+    overlay.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="30" fill="#22c55e"/>
+        <polyline points="18,33 28,43 46,22" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <p style="margin:0;color:#111;font-size:18px;font-weight:600">Experiment complete. Thank you!</p>
+      <p style="margin:0;color:#555;font-size:14px">You can now close this window.</p>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  function _showLoading(msg) {
+    _hideLoading();
+    const overlay = document.createElement('div');
+    overlay.id = 'jspsych-loading-overlay';
+    overlay.style.cssText = [
+      'position:fixed', 'inset:0', 'z-index:9999',
+      'display:flex', 'flex-direction:column',
+      'align-items:center', 'justify-content:center',
+      'background:' + _overlayBg, 'gap:20px',
+      'font-family:sans-serif'
+    ].join(';');
+    overlay.innerHTML = `
+      <div style="width:48px;height:48px;border:5px solid #e0e0e0;border-top-color:#555;border-radius:50%;animation:_spin 0.8s linear infinite"></div>
+      <p id="jspsych-loading-msg" style="margin:0;color:#555;font-size:15px">${msg || 'Please wait…'}</p>
+      <style>@keyframes _spin{to{transform:rotate(360deg)}}</style>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  
+  // --- CAPTCHA gate (hCaptcha or reCAPTCHA v2) ---
+  function _showCaptchaGate(siteKey, provider) {
+    return new Promise((resolve) => {
+      provider = provider || 'hcaptcha';
+
+      // Read body background at call time to match canvas styles
+      const _bgColor = (getComputedStyle(document.body).backgroundColor || '').trim();
+      const _captchaBg = _bgColor && _bgColor !== 'rgba(0, 0, 0, 0)' && _bgColor !== 'transparent' ? _bgColor : '#fff';
+
+      // Load the appropriate script once
+      if (!document.getElementById('captcha-script')) {
+        const s = document.createElement('script');
+        s.id = 'captcha-script';
+        s.async = true;
+        s.defer = true;
+        window._captchaReady = function() { window._captchaAPIReady = true; };
+        if (provider === 'recaptcha') {
+          s.src = 'https://www.google.com/recaptcha/api.js?render=explicit&onload=_captchaReady';
+        } else {
+          s.src = 'https://js.hcaptcha.com/1/api.js?onload=_captchaReady&render=explicit';
+        }
+        document.head.appendChild(s);
+      }
+
+      // Build overlay
+      const overlay = document.createElement('div');
+      overlay.id = 'jspsych-captcha-overlay';
+      overlay.style.cssText = [
+        'position:fixed', 'inset:0', 'z-index:10000',
+        'display:flex', 'flex-direction:column',
+        'align-items:center', 'justify-content:center',
+        'background:' + _captchaBg, 'gap:24px',
+        'font-family:sans-serif'
+      ].join(';');
+      overlay.innerHTML = `
+        <p style="margin:0;color:#333;font-size:17px;font-weight:600">
+          Please verify you are human
+        </p>
+        <div id="captcha-widget"></div>
+      `;
+      document.body.appendChild(overlay);
+
+      function _renderWidget() {
+        if (provider === 'recaptcha') {
+          if (typeof grecaptcha === 'undefined' || !window._captchaAPIReady) {
+            setTimeout(_renderWidget, 100);
+            return;
+          }
+          grecaptcha.render('captcha-widget', {
+            sitekey: siteKey,
+            theme: 'light',
+            callback: function(token) {
+              const el = document.getElementById('jspsych-captcha-overlay');
+              if (el) el.remove();
+              resolve(token);
+            },
+            'error-callback': function() { grecaptcha.reset(); }
+          });
+        } else {
+          // hCaptcha
+          if (typeof hcaptcha === 'undefined' || !window._captchaAPIReady) {
+            setTimeout(_renderWidget, 100);
+            return;
+          }
+          hcaptcha.render('captcha-widget', {
+            sitekey: siteKey,
+            theme: 'light',
+            callback: function(token) {
+              const el = document.getElementById('jspsych-captcha-overlay');
+              if (el) el.remove();
+              resolve(token);
+            },
+            'error-callback': function() { hcaptcha.reset(); }
+          });
+        }
+      }
+
+      _renderWidget();
+    });
+  }
+
+
+  (async () => {
+    // --- CAPTCHA gate (hCaptcha / reCAPTCHA) ---
+    // Se omite en recargas por jump (sessionStorage persiste entre reloads del mismo tab)
+    if (false && "" && !sessionStorage.getItem(_publicStorageKeys.captchaPassed)) {
+      const _loadingEl = document.getElementById('jspsych-loading-overlay');
+      if (_loadingEl) _loadingEl.style.display = 'none';
+      await _showCaptchaGate("", "hcaptcha");
+      sessionStorage.setItem(_publicStorageKeys.captchaPassed, '1');
+      if (_loadingEl) _loadingEl.style.display = 'flex';
+      _setLoadingMsg('Creating session…');
+    }
+
+
+    const resumeRaw = localStorage.getItem("expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:resume-trial");
+    const jumpStartup =
+      window.ExpBuilderNavigation.consumeReloadMarker();
+    const existingJump = jumpStartup.request;
+    const comingFromJumpReload = jumpStartup.status === 'ready';
+    const jumpStartupInvalid =
+      jumpStartup.status === 'invalid' || jumpStartup.status === 'stalled';
+    let resumeRouteDecision = null;
+
+    if (existingJump) {
+      localStorage.removeItem("expbuilder:public:e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6:resume-trial");
+      window.ExpBuilderRuntime?.emit('jump-reload-resume', {
+        ...(existingJump.context || {}),
+        targetId: existingJump.address.targetId,
+        targetKind: existingJump.address.targetKind,
+        progress: existingJump.cursor.progress,
+        comingFromJumpReload,
+        sessionId: String(trialSessionId)
+      });
+    } else if (!jumpStartupInvalid && isResuming && resumeRaw) {
+      resumeRouteDecision = _resolveResumeBranch(resumeRaw);
+    }
+
+    
+    // --- Configuración de Batching (cargada desde Firestore) ---
+    const BATCH_CONFIG = {
+      size: 0,
+      currentBatchNumber: 0,
+      resumeTimeoutMinutes: 30,
+      useIndexedDB: true
+    };
+
+    // Inicializar IndexedDB solo si está habilitado
+    if (BATCH_CONFIG.useIndexedDB) {
+      await TrialDB.init();
+    }
+    
+    // Verificar si hay una sesión pendiente (para retoma)
+    let resumedSession = false;
+    
+    if (BATCH_CONFIG.useIndexedDB) {
+      const existingTrials = await TrialDB.getAll();
+      
+      if (existingTrials.length > 0) {
+        const lastTrial = existingTrials[existingTrials.length - 1];
+        
+        if (lastTrial.sessionId === trialSessionId) {
+          BATCH_CONFIG.currentBatchNumber = Math.floor(existingTrials.length / (BATCH_CONFIG.size || 1));
+          resumedSession = true;
+        } else {
+          await TrialDB.clear();
+        }
+      }
+    }
+    
+    // SIEMPRE llamar a createSession (para crear documento en Firestore)
+    // El backend maneja sesiones duplicadas (409) y las retorna correctamente
+    _setLoadingMsg('Creating session…');
+    participantNumber = await createSession();
+
+    // If session name has counter token, generate final name now that participantNumber is known
+    if (_sessionNameHasDynamic() && typeof participantNumber === 'number' && !isNaN(participantNumber)) {
+      const _finalName = _generateSessionName(participantNumber);
+      if (_finalName) {
+        // Session IDs are durable identities. The generated name is display metadata.
+        _updateSessionName(trialSessionId, _finalName);
+      }
+    }
+
+    // Guardar sessionId y participantNumber en localStorage para futuras retomas
+    localStorage.setItem(_publicStorageKeys.sessionId, trialSessionId);
+    localStorage.setItem(_publicStorageKeys.participant, participantNumber.toString());
+
+    if (typeof participantNumber !== "number" || isNaN(participantNumber)) {
+      alert("The participant number is not assigned. Please, wait.");
+      throw new Error("participantNumber not assigned");
+    }
+    
+    // Esperar e inicializar Firebase
+    _setLoadingMsg('Loading resources…');
+    await waitForFirebase();
+    if (!window.firebase.apps.length) {
+      window.firebase.initializeApp(firebaseConfig);
+    }
+    const db = window.firebase.database();
+
+    // --- Configurar onDisconnect para finalizar sesión automáticamente ---
+    const sessionRef = db.ref('sessions/e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6/' + trialSessionId);
+    await sessionRef.set({
+      connected: true,
+      experimentID: 'e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6',
+      sessionId: trialSessionId,
+      participantNumber: participantNumber,
+      startedAt: window.firebase.database.ServerValue.TIMESTAMP,
+      storage: 'googledrive',
+      storageProvider: 'googledrive',
+      state: resumedSession ? 'resumed' : 'initiated',
+      lastUpdate: window.firebase.database.ServerValue.TIMESTAMP,
+      metadata: metadata,
+      resumeTimeoutMinutes: BATCH_CONFIG.resumeTimeoutMinutes,
+      useIndexedDB: BATCH_CONFIG.useIndexedDB
+    });
+    
+    sessionRef.onDisconnect().update({
+      connected: false,
+      state: 'disconnected',
+      disconnectedAt: window.firebase.database.ServerValue.TIMESTAMP,
+      storage: 'googledrive'
+    });
+
+    
+    window.nextTrialId = null;
+    window.skipRemaining = false;
+    window.branchingActive = false;
+    window.branchCustomParameters = null;
+
+    const evaluateCondition = window.ExpBuilderBranching.evaluateCondition;
+    const getNextTrialId = (lastTrialData) => {
+      if (!lastTrialData || !lastTrialData.trials || !lastTrialData.trials[0]) {
+        return null;
+      }
+      const trial = lastTrialData.trials[0];
+      const decision = window.ExpBuilderBranching.decide(
+        trial,
+        trial.branches || [],
+        trial.branchConditions || []
+      );
+      window.branchCustomParameters = decision.customParameters;
+      return decision.targetId;
+    };
+  
+
+    if (resumeRouteDecision !== null) {
+      const resumesBranch = resumeRouteDecision.kind === 'branch';
+      window.nextTrialId = resumesBranch
+        ? resumeRouteDecision.targetId
+        : null;
+      window.skipRemaining = resumesBranch;
+      window.branchingActive = resumesBranch;
+      window.branchCustomParameters =
+        resumesBranch
+          ? resumeRouteDecision.customParameters ?? null
+          : null;
+      if (!resumesBranch) {
+        window.ExpBuilderNavigation.activateResume(resumeRouteDecision);
+      }
+      window.ExpBuilderRuntime?.emit(
+        'resume-route-activated',
+        resumeRouteDecision
+      );
+    }
+
+
+    _hideLoading();
+
+    // --- Recruitment platform URL params (using URLSearchParams - available before initJsPsych) ---
+    const _urlParams = new URLSearchParams(window.location.search);
+    const _prolificPID = _urlParams.get('PROLIFIC_PID');
+    const _prolificStudyID = _urlParams.get('STUDY_ID');
+    const _prolificSessionID = _urlParams.get('SESSION_ID');
+    const _mturkWorkerID = _urlParams.get('workerId');
+    const _mturkAssignmentID = _urlParams.get('assignmentId');
+    const _mturkHitID = _urlParams.get('hitId');
+    const _mturkTurkSubmitTo = _urlParams.get('turkSubmitTo');
+    const _mturkIsPreview = _mturkAssignmentID === 'ASSIGNMENT_ID_NOT_AVAILABLE';
+
+    
+
+    // Track pending batch saves
+    const pendingBatchSaves = [];
+
+    // Función para enviar batch concatenado a Firestore (usando endpoint existente)
+    async function sendBatchConcatenated(trials, batchNumber) {
+      if (trials.length === 0) return;
+      
+      console.log(`Sending concatenated batch #${batchNumber} with ${trials.length} trials`);
+      
+      // Concatenar trials en un documento plano sin anidamiento
+      // Convertir cada trial a string JSON y concatenar con separador
+      const concatenatedData = {
+        batchNumber: batchNumber,
+        trialsCount: trials.length,
+        trialsData: JSON.stringify(trials), // String, no array anidado
+        firstTrialIndex: trials[0]?.trial_index || 0,
+        lastTrialIndex: trials[trials.length - 1]?.trial_index || 0,
+        clientTimestamp: trials[0]?.clientTimestamp || Date.now(),
+        trial_index: `batch_${batchNumber}` // ID único para batch
+      };
+      
+      const batchPromise = fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "*/*" },
+        body: JSON.stringify({
+          experimentID: "e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6",
+          sessionId: trialSessionId,
+          data: concatenatedData,
+          storage: "googledrive",
+        }),
+      })
+      .then(res => {
+        if (!res.ok) {
+          return res.text().then(text => {
+            console.error('Error sending batch:', text);
+            throw new Error('Batch upload failed: ' + text);
+          });
+        }
+        return res.json();
+      })
+      .then(result => {
+        if (result && result.success) {
+          console.log(`Batch #${batchNumber} sent successfully`);
+        }
+      })
+      .catch(error => {
+        console.error('Error in sendBatchConcatenated:', error);
+        throw error;
+      })
+      .finally(() => {
+        const index = pendingBatchSaves.indexOf(batchPromise);
+        if (index > -1) {
+          pendingBatchSaves.splice(index, 1);
+        }
+      });
+      
+      pendingBatchSaves.push(batchPromise);
+      return batchPromise;
+    }
+
+    // Función para enviar experimento completo directo al storage
+    async function sendCompleteExperiment(trials) {
+      if (trials.length === 0) return;
+      
+      console.log(`Sending complete experiment with ${trials.length} trials directly to storage`);
+      
+      // Agregar metadata a cada trial
+      const trialsWithMetadata = trials.map(trial => ({
+        ...trial,
+        session_browser: metadata.browser || "",
+        session_browser_version: metadata.browserVersion || "",
+        session_os: metadata.os || "",
+        session_screen_resolution: metadata.screenResolution || "",
+        session_language: metadata.language || "",
+        session_started_at: metadata.startedAt || "",
+        session_id: trialSessionId,
+      }));
+      
+      // Enviar trials como JSON - el backend los convertirá a CSV
+      const apiBaseUrl = "https://us-central1-test-e4cf9.cloudfunctions.net/apiData".replace('/apiData', '');
+      return fetch(`${apiBaseUrl}/apiDataComplete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "*/*" },
+        body: JSON.stringify({
+          experimentID: "e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6",
+          sessionId: trialSessionId,
+          trialsData: trialsWithMetadata,
+          storage: "googledrive",
+        }),
+      })
+      .then(res => {
+        if (!res.ok) {
+          return res.text().then(text => {
+            console.error('Error sending complete experiment:', text);
+            throw new Error(text);
+          });
+        }
+        return res.json();
+      })
+      .then(result => {
+        if (result && result.success) {
+          console.log('Complete experiment sent successfully to storage');
+        }
+        return result;
+      })
+      .catch(error => {
+        console.error('Error in sendCompleteExperiment:', error);
+        throw error;
+      });
+    }
+
+    // Clean up stale jsPsych wrappers from previous runs (prevents stacking on restarts)
+    document.querySelectorAll('.jspsych-content-wrapper').forEach(el => el.remove());
+
+    // __INIT_JSPSYCH_START__
+    const jsPsych = initJsPsych({
+      
+
+
+      on_trial_start: function(trial) {
+        const lastTrialData = jsPsych.data.get()
+        if (lastTrialData && trial.data) {
+        trial.data.prev_response = lastTrialData.response;
+        }
+      },
+
+      
+
+      on_data_update: async function (data) {
+        const persistenceToken = window.ExpBuilderPersistence.start();
+        try {
+
+        // Agregar timestamp del cliente para ordenamiento correcto
+        data.clientTimestamp = Date.now();
+        data.sessionId = trialSessionId;
+        data.experimentID = "e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6";
+        if (data.builder_id !== undefined && data.builder_id !== null) {
+          localStorage.setItem(
+            _publicStorageKeys.resumeTrial,
+            JSON.stringify(_createResumeCheckpoint(data))
+          );
+        }
+
+        // Actualizar estado a 'in-progress' en la primera actualización
+        if (data.trial_index === 0) {
+          sessionRef.update({
+            state: 'in-progress',
+            lastUpdate: window.firebase.database.ServerValue.TIMESTAMP
+          }).catch(err => console.error('Error updating state:', err));
+        }
+
+        if (BATCH_CONFIG.useIndexedDB) {
+          // --- CON IndexedDB: Batching habilitado ---
+          try {
+            await TrialDB.add(data);
+            window.ExpBuilderNavigation.onTrialPersisted(data);
+          } catch (error) {
+            console.error('Error saving to IndexedDB:', error);
+            return;
+          }
+
+          // Solo enviar batches si batchSize > 0
+          if (BATCH_CONFIG.size > 0) {
+            const pendingCount = await TrialDB.count();
+            
+            // Enviar batch cuando se acumule el tamaño configurado
+            if (pendingCount >= BATCH_CONFIG.size) {
+              const batch = await TrialDB.getN(BATCH_CONFIG.size);
+              BATCH_CONFIG.currentBatchNumber++;
+              
+              // Enviar batch concatenado a Firestore
+              await sendBatchConcatenated(batch, BATCH_CONFIG.currentBatchNumber);
+              
+              // Eliminar trials enviados de IndexedDB
+              await TrialDB.deleteN(BATCH_CONFIG.size);
+              
+              console.log(`Batch #${BATCH_CONFIG.currentBatchNumber} sent, ${batch.length} trials`);
+            }
+          }
+          // Si batchSize = 0, solo acumular en IndexedDB, enviar TODO en on_finish
+        } else {
+          // --- SIN IndexedDB: Enviar trial por trial a Firestore ---
+          try {
+            const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                experimentID: "e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6",
+                sessionId: trialSessionId,
+                data: data
+              })
+            });
+
+            if (!response.ok) {
+              console.error('Error sending trial to Firestore:', await response.text());
+            } else {
+              window.ExpBuilderNavigation.onTrialPersisted(data);
+            }
+          } catch (error) {
+            console.error('Error sending trial:', error);
+          }
+        }
+
+        
+      if ((data.trial_id !== undefined && data.trial_id !== null) ||
+          (data.loop_id !== undefined && data.loop_id !== null)) {
+        const lastTrialData = jsPsych.data.getLastTrialData();
+        const trial = lastTrialData.trials ? lastTrialData.trials[0] : null;
+        if (trial && trial.branches && trial.branches.length > 0 &&
+            trial.isInLoop !== true) {
+          const nextTrialId = getNextTrialId(lastTrialData);
+          if (nextTrialId === 'FINISH_EXPERIMENT') {
+            if (window.ExpBuilderRuntime) {
+              window.ExpBuilderRuntime.emit('branch-decision', {
+                sourceId: trial.builder_id ?? trial.trial_id ?? trial.loop_id,
+                targetId: 'FINISH_EXPERIMENT',
+                scope: 'global'
+              });
+            }
+            jsPsych.abortExperiment(
+              'Experiment finished by branching condition',
+              {}
+            );
+            return;
+          }
+          if (nextTrialId !== null && nextTrialId !== undefined) {
+            window.nextTrialId = nextTrialId;
+            window.skipRemaining = true;
+            window.branchingActive = true;
+          }
+        }
+      }
+  
+        } finally {
+          window.ExpBuilderPersistence.finish(persistenceToken);
+        }
+      },
+
+      on_finish: async function() {
+        if (window.ExpBuilderNavigation.isTransitionPending()) {
+          window.ExpBuilderRuntime?.emit(
+            'experiment-finish-suppressed',
+            { reason: 'jump' }
+          );
+          return;
+        }
+        _showLoading('Saving your data…');
+        await new Promise(r => setTimeout(r, 0));
+        
+        try {
+          if (BATCH_CONFIG.useIndexedDB) {
+          // --- CON IndexedDB: Enviar datos acumulados ---
+          
+          // Esperar cualquier batch pendiente
+          if (pendingBatchSaves.length > 0) {
+            _setLoadingMsg('Uploading batches…');
+            await Promise.allSettled(pendingBatchSaves);
+          }
+
+          const allTrials = await TrialDB.getAll();
+          
+          if (allTrials.length > 0) {
+            if (BATCH_CONFIG.size === 0) {
+              _setLoadingMsg('Uploading data…');
+              await sendCompleteExperiment(allTrials);
+              await TrialDB.clear();
+            } else {
+              BATCH_CONFIG.currentBatchNumber++;
+              _setLoadingMsg('Sending final batch…');
+              await sendBatchConcatenated(allTrials, BATCH_CONFIG.currentBatchNumber);
+              await TrialDB.clear();
+              
+              if (pendingBatchSaves.length > 0) {
+                _setLoadingMsg('Finishing upload…');
+                await Promise.allSettled(pendingBatchSaves);
+              }
+            }
+          }
+          }
+        } catch (error) {
+          console.error('Error flushing trial data:', error);
+          _setLoadingMsg(
+            'Error saving data. Your progress was preserved. Please reload to retry.'
+          );
+          return;
+        }
+        
+        _setLoadingMsg('Finishing up…');
+        
+        try {
+          const needsBackendFinalization = !(BATCH_CONFIG.useIndexedDB && BATCH_CONFIG.size === 0);
+          
+          await sessionRef.update({
+            connected: false,
+            finished: true,
+            needsFinalization: needsBackendFinalization,
+            state: 'completed',
+            finishedAt: window.firebase.database.ServerValue.TIMESTAMP,
+            lastUpdate: window.firebase.database.ServerValue.TIMESTAMP
+          });
+        } catch (error) {
+          console.error('Error marking session as finished:', error);
+          _setLoadingMsg('Error saving data. Please contact support.');
+          return;
+        }
+
+        // Cancel only after the durable completed state was confirmed.
+        sessionRef.onDisconnect().cancel();
+        window.ExpBuilderNavigation.clearTransientState();
+        localStorage.removeItem(_publicStorageKeys.sessionId);
+        localStorage.removeItem(_publicStorageKeys.participant);
+        sessionStorage.removeItem(_publicStorageKeys.captchaPassed);
+
+        // --- Recruitment platform redirect ---
+        
+        
+        _showSuccess();
+      }
+    });
+    // __INIT_JSPSYCH_END__
+
+    // Uncomment to see the json results after finishing a session experiment
+    // jsPsych.data.displayData('csv');
+
+    
+
+    
+window.ExpBuilderExecutionAddresses = Object.freeze(
+  {"version":2,"revision":"2026-09-17T22:50:44.263Z","nextBySource":{},"addressesByTarget":{"1789684771466":{"targetId":1789684771466,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]}}}
+);
+
+const timeline = [];
+
+    const globalPreload = {
+      type: jsPsychPreload,
+      files: ["img/logos.svg"]
+    };
+    timeline.push(globalPreload);
+
+
+
+const test_stimuli_Bienvenida = [{components: [{ type: "ImageComponent", coordinates: {"x":0,"y":49.96989676164333}, zIndex: 2, stimulus: "img/logos.svg", name: "ImageComponent_1" }, { type: "HtmlComponent", coordinates: {"x":0,"y":0}, zIndex: 3, stimulus: "<p id=\"iyhw\" style=\"box-sizing: border-box; text-align: center;\"></p><p id=\"ivos\" style=\"box-sizing: border-box; text-align: center; font-size: 30px;\"><strong id=\"i8w4\" style=\"box-sizing: border-box; font-size: 48px;\">¡Bienvenido!</strong></p><p id=\"iei7\" style=\"box-sizing: border-box; text-align: center; font-size: 20px;\"></p><p id=\"iyz1\" style=\"box-sizing: border-box; text-align: center; font-size: 28px;\">Los responsables de este proyecto de investigación</p><p id=\"ikdcy\" style=\"box-sizing: border-box; text-align: center;\"><strong id=\"i4k6w\" style=\"box-sizing: border-box; font-size: 30px;\">¡AGRADECEN TU PARTICIPACIÓN!</strong></p><span id=\"itgdk\" style=\"box-sizing: border-box; text-align: center; font-size: 26px;\">Dr. Luis Llamas Alonso (Universidad Autónoma de Baja California)</span><br id=\"id1rf\" style=\"box-sizing: border-box; text-align: center;\"><span id=\"i693g\" style=\"box-sizing: border-box; text-align: center; font-size: 26px;\">Dr. Vladimir Huerta Chávez (Universidad de Guadalajara)</span><br id=\"iapx6\" style=\"box-sizing: border-box; text-align: center;\"><span id=\"iroc6\" style=\"box-sizing: border-box; text-align: center; font-size: 26px;\">Dr. Armando Angulo Chavira (Universidad Nacional Autónoma de México)</span><p id=\"ip3jx\" style=\"box-sizing: border-box;\"></p>", name: "HtmlComponent_1" }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":0,"y":-41.99999999999999}, zIndex: 4, choices: ["Iniciar"], button_color: "#3b82f6", button_text_color: "#ffffff", button_font_size: 30, button_border_radius: 3, button_border_color: "#3b82f6", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 1.5625 }],
+__canvasStyles: {"backgroundColor":"#ffffff","width":1920,"height":1080,"fullScreen":false,"progressBar":false}}];
+    const Bienvenida_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+__canvasStyles: jsPsych.timelineVariable("__canvasStyles"),
+data: {
+    rt: "rt",
+    trial_id: 1789684771466,
+    builder_id: 1789684771466,
+    trial_name: "Bienvenida",
+    
+    
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      // For trials outside loops, use window.branchCustomParameters
+      if (window.branchCustomParameters && typeof window.branchCustomParameters === 'object') {
+        Object.entries(window.branchCustomParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Find the question in survey_json.elements
+                    const elements = fieldArray[compIndex].survey_json.elements || [];
+                    const questionIndex = elements.findIndex(q => q.name === questionName);
+                    
+                    if (questionIndex !== -1) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        fieldArray[compIndex].survey_json.elements[questionIndex].defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+        // Clear the custom parameters after applying them
+        window.branchCustomParameters = null;
+      }
+      
+    },
+    
+    on_finish: function(data) {
+      if (window.branchingActive) {
+        jsPsych.abortExperiment('', {});
+      }
+    },};
+    const Bienvenida_procedure = {
+    timeline: 
+    [Bienvenida_timeline],
+    timeline_variables: test_stimuli_Bienvenida,
+    
+    conditional_function: function() {
+      const currentId = 1789684771466;
+      
+      const navigationDecision =
+        window.ExpBuilderNavigation?.enterItem(currentId, 'trial');
+      if (navigationDecision !== null && navigationDecision !== undefined) {
+        return navigationDecision;
+      }
+      
+      // Si skipRemaining está activo (branching normal), verificar si este es el trial objetivo
+      if (window.skipRemaining) {
+        if (String(currentId) === String(window.nextTrialId)) {
+          window.ExpBuilderRuntime?.emit('branch-target-enter', {
+            targetId: currentId
+          });
+          window.skipRemaining = false;
+          window.nextTrialId = null;
+          return true;
+        }
+        return false;
+      }
+      
+      return true;
+    },
+  
+    
+    };
+    timeline.push(Bienvenida_procedure);
+  
+
+    jsPsych.run(timeline);
+
+
+})();
+
+</script></body></html>
