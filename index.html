@@ -934,7 +934,7 @@ const cWe = observeJumpReload;
           experimentID: "e0788e33-3c0a-4150-a0b9-8f20e4d6bfd6",
           sessionId: trialSessionId,
           uid: Uid,
-          batchSize: 0,
+          batchSize: 1,
           ...(_preSessionName ? { sessionName: _preSessionName } : {})
         }),
       });
@@ -1175,9 +1175,9 @@ const cWe = observeJumpReload;
     
     // --- Configuración de Batching (cargada desde Firestore) ---
     const BATCH_CONFIG = {
-      size: 0,
+      size: 1,
       currentBatchNumber: 0,
-      resumeTimeoutMinutes: 30,
+      resumeTimeoutMinutes: 1,
       useIndexedDB: true
     };
 
@@ -1645,7 +1645,7 @@ const cWe = observeJumpReload;
 
     
 window.ExpBuilderExecutionAddresses = Object.freeze(
-  {"version":2,"revision":"2026-09-17T22:50:44.263Z","nextBySource":{},"addressesByTarget":{"1789684771466":{"targetId":1789684771466,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]}}}
+  {"version":2,"revision":"2026-09-18T19:20:40.686Z","nextBySource":{},"addressesByTarget":{"1789684771466":{"targetId":1789684771466,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1789688394947":{"targetId":1789688394947,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1789689659098":{"targetId":1789689659098,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1789689653852":{"targetId":1789689653852,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1789753167925":{"targetId":1789753167925,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]},"1789755712438":{"targetId":1789755712438,"targetKind":"trial","targetOwnerId":null,"enterLoopIds":[]}}}
 );
 
 const timeline = [];
@@ -1660,16 +1660,334 @@ const timeline = [];
 
 const test_stimuli_Bienvenida = [{components: [{ type: "ImageComponent", coordinates: {"x":0,"y":49.96989676164333}, zIndex: 2, stimulus: "img/logos.svg", name: "ImageComponent_1" }, { type: "HtmlComponent", coordinates: {"x":0,"y":0}, zIndex: 3, stimulus: "<p id=\"iyhw\" style=\"box-sizing: border-box; text-align: center;\"></p><p id=\"ivos\" style=\"box-sizing: border-box; text-align: center; font-size: 30px;\"><strong id=\"i8w4\" style=\"box-sizing: border-box; font-size: 48px;\">¡Bienvenido!</strong></p><p id=\"iei7\" style=\"box-sizing: border-box; text-align: center; font-size: 20px;\"></p><p id=\"iyz1\" style=\"box-sizing: border-box; text-align: center; font-size: 28px;\">Los responsables de este proyecto de investigación</p><p id=\"ikdcy\" style=\"box-sizing: border-box; text-align: center;\"><strong id=\"i4k6w\" style=\"box-sizing: border-box; font-size: 30px;\">¡AGRADECEN TU PARTICIPACIÓN!</strong></p><span id=\"itgdk\" style=\"box-sizing: border-box; text-align: center; font-size: 26px;\">Dr. Luis Llamas Alonso (Universidad Autónoma de Baja California)</span><br id=\"id1rf\" style=\"box-sizing: border-box; text-align: center;\"><span id=\"i693g\" style=\"box-sizing: border-box; text-align: center; font-size: 26px;\">Dr. Vladimir Huerta Chávez (Universidad de Guadalajara)</span><br id=\"iapx6\" style=\"box-sizing: border-box; text-align: center;\"><span id=\"iroc6\" style=\"box-sizing: border-box; text-align: center; font-size: 26px;\">Dr. Armando Angulo Chavira (Universidad Nacional Autónoma de México)</span><p id=\"ip3jx\" style=\"box-sizing: border-box;\"></p>", name: "HtmlComponent_1" }],
 response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":0,"y":-41.99999999999999}, zIndex: 4, choices: ["Iniciar"], button_color: "#3b82f6", button_text_color: "#ffffff", button_font_size: 30, button_border_radius: 3, button_border_color: "#3b82f6", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 1.5625 }],
+require_response: true,
 __canvasStyles: {"backgroundColor":"#ffffff","width":1920,"height":1080,"fullScreen":false,"progressBar":false}}];
     const Bienvenida_timeline = {
     type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
 response_components: jsPsych.timelineVariable("response_components"),
+require_response: jsPsych.timelineVariable("require_response"),
 __canvasStyles: jsPsych.timelineVariable("__canvasStyles"),
 data: {
     rt: "rt",
     trial_id: 1789684771466,
     builder_id: 1789684771466,
     trial_name: "Bienvenida",
+    
+    
+    branches: [1789688394947],
+    branchConditions: [undefined] 
+    
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      // For trials outside loops, use window.branchCustomParameters
+      if (window.branchCustomParameters && typeof window.branchCustomParameters === 'object') {
+        Object.entries(window.branchCustomParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Find the question in survey_json.elements
+                    const elements = fieldArray[compIndex].survey_json.elements || [];
+                    const questionIndex = elements.findIndex(q => q.name === questionName);
+                    
+                    if (questionIndex !== -1) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        fieldArray[compIndex].survey_json.elements[questionIndex].defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+        // Clear the custom parameters after applying them
+        window.branchCustomParameters = null;
+      }
+      
+    },
+    
+    on_finish: function(data) {
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data,
+        [1789688394947],
+        []
+      );
+      const nextTrialId = branchDecision.targetId;
+      if (nextTrialId !== null && nextTrialId !== undefined) {
+        window.nextTrialId = nextTrialId;
+        window.skipRemaining = true;
+        window.branchingActive = true;
+        window.branchCustomParameters = branchDecision.customParameters;
+        if (window.ExpBuilderRuntime) {
+          window.ExpBuilderRuntime.emit('branch-decision', {
+            sourceId: data.builder_id ?? data.trial_id ?? data.loop_id ?? null,
+            targetId: nextTrialId,
+            conditionId: branchDecision.conditionId,
+            usedDefault: branchDecision.usedDefault,
+            scope: 'global'
+          });
+        }
+      }
+  
+    },};
+    const Bienvenida_procedure = {
+    timeline: 
+    [Bienvenida_timeline],
+    timeline_variables: test_stimuli_Bienvenida,
+    
+    conditional_function: function() {
+      const currentId = 1789684771466;
+      
+      const navigationDecision =
+        window.ExpBuilderNavigation?.enterItem(currentId, 'trial');
+      if (navigationDecision !== null && navigationDecision !== undefined) {
+        return navigationDecision;
+      }
+      
+      // Si skipRemaining está activo (branching normal), verificar si este es el trial objetivo
+      if (window.skipRemaining) {
+        if (String(currentId) === String(window.nextTrialId)) {
+          window.ExpBuilderRuntime?.emit('branch-target-enter', {
+            targetId: currentId
+          });
+          window.skipRemaining = false;
+          window.nextTrialId = null;
+          return true;
+        }
+        return false;
+      }
+      
+      return true;
+    },
+  
+    
+    };
+    timeline.push(Bienvenida_procedure);
+  
+
+
+const test_stimuli_consent = [{components: [{ type: "TextComponent", coordinates: {"x":0,"y":80}, zIndex: 1, text: "Consentimiento informado", font_color: "#000000", font_size: 40, font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 2.083333333333333 }, { type: "TextComponent", coordinates: {"x":0,"y":0}, width: 51.552707029181775, height: 43.541666666666664, zIndex: 2, text: "Te invitamos a participar en un estudio sobre el reconocimiento de expresiones faciales en población mexicana.\n\nDurante la tarea verás fotografías de rostros de niños mostrando distintas expresiones emocionales y deberás indicar qué emoción percibes. También te pediremos algunos datos demográficos generales.\n\nNo hay una duración mínima ni máxima. Puedes responder tantas imágenes como desees y terminar tu participación en cualquier momento, sin penalización. Si decides terminar antes, las respuestas que hayas proporcionado hasta ese momento podrán utilizarse para el análisis.\n\nLa participación implica riesgos mínimos, aunque la tarea puede producir cansancio o resultar repetitiva. Tus respuestas serán tratadas de forma confidencial y utilizadas únicamente con fines de investigación y difusión científica. No se publicará información que permita identificarte personalmente.\n\nLa participación es completamente voluntaria. Para participar debes tener 18 años o más.\n\nAl seleccionar “Acepto participar”, confirmas que eres mayor de edad, has leído esta información y aceptas participar voluntariamente.", font_color: "#000000", font_size: 24, font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 1.25 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":-20,"y":-80}, zIndex: 3, choices: ["Acepto"], button_color: "#22c55e", button_text_color: "#ffffff", button_font_size: 20, button_border_radius: 3, button_border_color: "#22c55e", button_border_width: 1, button_padding: "6px 30px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 1.0416666666666665 }, { type: "ButtonResponseComponent", coordinates: {"x":20,"y":-80}, width: 6.510416666666667, height: 2.083333333333333, zIndex: 4, choices: ["No acepto"], button_color: "#ef4444", button_text_color: "#ffffff", button_font_size: 20, button_border_radius: 3, button_border_color: "#ef4444", button_border_width: 1, button_padding: "6px 16px", name: "ButtonResponseComponent_1_copy", _button_font_size_runtime_vw: 1.0416666666666665 }],
+__canvasStyles: {"backgroundColor":"#ffffff","width":1920,"height":1080,"fullScreen":false,"progressBar":false}}];
+    const consent_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+__canvasStyles: jsPsych.timelineVariable("__canvasStyles"),
+data: {
+    rt: "rt",
+    trial_id: 1789688394947,
+    builder_id: 1789688394947,
+    trial_name: "consent",
+    
+    
+    branches: [1789689653852, 1789689659098],
+    branchConditions: [[{"id":1789690297822,"rules":[{"column":"","op":"==","value":"Acepto","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1789689653852","customParameters":{}},{"id":1789690311783,"rules":[{"column":"","op":"==","value":"No acepto","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1_copy","prop":"response"}],"nextTrialId":"1789689659098","customParameters":{}}]] 
+    
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      // For trials outside loops, use window.branchCustomParameters
+      if (window.branchCustomParameters && typeof window.branchCustomParameters === 'object') {
+        Object.entries(window.branchCustomParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Find the question in survey_json.elements
+                    const elements = fieldArray[compIndex].survey_json.elements || [];
+                    const questionIndex = elements.findIndex(q => q.name === questionName);
+                    
+                    if (questionIndex !== -1) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        fieldArray[compIndex].survey_json.elements[questionIndex].defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+        // Clear the custom parameters after applying them
+        window.branchCustomParameters = null;
+      }
+      
+    },
+    
+    on_finish: function(data) {
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data,
+        [1789689653852,1789689659098],
+        [{"id":1789690297822,"rules":[{"column":"","op":"==","value":"Acepto","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1","prop":"response"}],"nextTrialId":"1789689653852","customParameters":{}},{"id":1789690311783,"rules":[{"column":"","op":"==","value":"No acepto","fieldType":"response_components","componentIdx":"ButtonResponseComponent_1_copy","prop":"response"}],"nextTrialId":"1789689659098","customParameters":{}}]
+      );
+      const nextTrialId = branchDecision.targetId;
+      if (nextTrialId !== null && nextTrialId !== undefined) {
+        window.nextTrialId = nextTrialId;
+        window.skipRemaining = true;
+        window.branchingActive = true;
+        window.branchCustomParameters = branchDecision.customParameters;
+        if (window.ExpBuilderRuntime) {
+          window.ExpBuilderRuntime.emit('branch-decision', {
+            sourceId: data.builder_id ?? data.trial_id ?? data.loop_id ?? null,
+            targetId: nextTrialId,
+            conditionId: branchDecision.conditionId,
+            usedDefault: branchDecision.usedDefault,
+            scope: 'global'
+          });
+        }
+      }
+  
+    },};
+    const consent_procedure = {
+    timeline: 
+    [consent_timeline],
+    timeline_variables: test_stimuli_consent,
+    
+    conditional_function: function() {
+      const currentId = 1789688394947;
+      
+      const navigationDecision =
+        window.ExpBuilderNavigation?.enterItem(currentId, 'trial');
+      if (navigationDecision !== null && navigationDecision !== undefined) {
+        return navigationDecision;
+      }
+      
+      // Si skipRemaining está activo (branching normal), verificar si este es el trial objetivo
+      if (window.skipRemaining) {
+        if (String(currentId) === String(window.nextTrialId)) {
+          window.ExpBuilderRuntime?.emit('branch-target-enter', {
+            targetId: currentId
+          });
+          window.skipRemaining = false;
+          window.nextTrialId = null;
+          return true;
+        }
+        return false;
+      }
+      
+      return true;
+    },
+  
+    
+    };
+    timeline.push(consent_procedure);
+  
+
+
+const test_stimuli_no_consent = [{components: [{ type: "HtmlComponent", coordinates: {"x":0,"y":0}, zIndex: 1, stimulus: "<p id=\"i1xl\" style=\"box-sizing: border-box;\"></p><div id=\"iwdi\" style=\"box-sizing: border-box; font-family: sans-serif; text-align: center; font-size: 42px; font-weight: bold; line-height: 1.2; margin-bottom: 28px;\">Has decidido no participar</div><p id=\"iphx\" style=\"box-sizing: border-box; font-family: sans-serif; text-align: center; margin: 0px 0px 26px; font-size: 28px; line-height: 1.45;\">Debido a que no aceptaste el consentimiento de participación, el estudio <strong style=\"box-sizing: border-box;\">no continuará</strong>.</p><div id=\"ipmpb\" style=\"box-sizing: border-box; font-family: sans-serif; text-align: center; padding: 20px 24px; background: rgb(241, 241, 241); border-radius: 12px; font-size: 25px; line-height: 1.4;\">No se te presentarán más preguntas ni tareas.<br style=\"box-sizing: border-box;\">Pulsa <strong style=\"box-sizing: border-box;\">“Finalizar”</strong> para cerrar correctamente esta sesión.</div><p style=\"box-sizing: border-box;\"></p>", name: "HtmlComponent_1" }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":0,"y":-34.10235101041276}, zIndex: 2, choices: ["Finalizar"], button_color: "#ffffff", button_text_color: "#000000", button_font_size: 20, button_border_radius: 3, button_border_color: "#000000", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 1.0416666666666665 }],
+__canvasStyles: {"backgroundColor":"#ffffff","width":1920,"height":1080,"fullScreen":false,"progressBar":false}}];
+    const no_consent_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+__canvasStyles: jsPsych.timelineVariable("__canvasStyles"),
+data: {
+    rt: "rt",
+    trial_id: 1789689659098,
+    builder_id: 1789689659098,
+    trial_name: "no_consent",
     
     
   },
@@ -1758,13 +2076,13 @@ data: {
         jsPsych.abortExperiment('', {});
       }
     },};
-    const Bienvenida_procedure = {
+    const no_consent_procedure = {
     timeline: 
-    [Bienvenida_timeline],
-    timeline_variables: test_stimuli_Bienvenida,
+    [no_consent_timeline],
+    timeline_variables: test_stimuli_no_consent,
     
     conditional_function: function() {
-      const currentId = 1789684771466;
+      const currentId = 1789689659098;
       
       const navigationDecision =
         window.ExpBuilderNavigation?.enterItem(currentId, 'trial');
@@ -1790,7 +2108,461 @@ data: {
   
     
     };
-    timeline.push(Bienvenida_procedure);
+    timeline.push(no_consent_procedure);
+  
+
+
+const test_stimuli_demographics = [{components: [],
+response_components: [{ type: "SurveyComponent", coordinates: {"x":0,"y":0}, zIndex: 1, survey_json: {"pages":[{"elements":[{"type":"text","name":"question1","title":"Your question here"}]}],"elements":[{"type":"text","name":"question1","title":"Fecha de nacimiento:","isRequired":true},{"type":"radiogroup","name":"question2","title":"Sexo","isRequired":true,"choices":[{"value":"Hombre","text":"Hombre","imageLink":""},{"value":"Mujer","text":"Mujer","imageLink":""},{"value":"Prefiero no responder","text":"Prefiero no responder","imageLink":""}]},{"type":"radiogroup","name":"question3","title":"Género","isRequired":true,"choices":[{"value":"Hombre","text":"Hombre","imageLink":""},{"value":"Mujer","text":"Mujer","imageLink":""},{"value":"No binario","text":"No binario","imageLink":""},{"value":"Prefiero no responder","text":"Prefiero no responder","imageLink":""}]},{"type":"radiogroup","name":"question4","title":"Nacionalidad mexicana","isRequired":true,"choices":[{"value":"Sí","text":"Sí","imageLink":""},{"value":"No","text":"No","imageLink":""}]},{"type":"rating","name":"question5","title":"¿Cuántos años has vivido en México?","isRequired":true,"rateMax":5},{"type":"dropdown","name":"question6","title":"¿En qué estado de la República Mexicana has vivido durante más años?","isRequired":true,"choices":[{"value":"Aguascalientes","text":"Aguascalientes","imageLink":""},{"value":"Baja California","text":"Baja California","imageLink":""},{"value":"Baja California Sur","text":"Baja California Sur","imageLink":""},{"value":"Campeche","text":"Campeche","imageLink":""},{"value":"Chiapas","text":"Chiapas","imageLink":""},{"value":"Chihuahua","text":"Chihuahua","imageLink":""},{"value":"","text":"","imageLink":""},{"value":"","text":"","imageLink":""},{"value":"","text":"","imageLink":""},{"value":"Ciudad de México","text":"Ciudad de México","imageLink":""},{"value":"Coahuila","text":"Coahuila","imageLink":""},{"value":"Colima","text":"Colima","imageLink":""},{"value":"Durango","text":"Durango","imageLink":""},{"value":"Estado de México","text":"Estado de México","imageLink":""},{"value":"Guanajuato","text":"Guanajuato","imageLink":""},{"value":"Guerrero","text":"Guerrero","imageLink":""},{"value":"Hidalgo","text":"Hidalgo","imageLink":""},{"value":"Jalisco","text":"Jalisco","imageLink":""},{"value":"Michoacán","text":"Michoacán","imageLink":""},{"value":"Morelos","text":"Morelos","imageLink":""},{"value":"Nayarit","text":"Nayarit","imageLink":""},{"value":"Nuevo León","text":"Nuevo León","imageLink":""},{"value":"Oaxaca","text":"Oaxaca","imageLink":""},{"value":"Puebla","text":"Puebla","imageLink":""},{"value":"Querétaro","text":"Querétaro","imageLink":""},{"value":"Quintana Roo","text":"Quintana Roo","imageLink":""},{"value":"San Luis Potosí","text":"San Luis Potosí","imageLink":""},{"value":"Sinaloa","text":"Sinaloa","imageLink":""},{"value":"Sonora","text":"Sonora","imageLink":""},{"value":"Tabasco","text":"Tabasco","imageLink":""},{"value":"Tamaulipas","text":"Tamaulipas","imageLink":""},{"value":"Tlaxcala","text":"Tlaxcala","imageLink":""},{"value":"Veracruz","text":"Veracruz","imageLink":""},{"value":"Yucatán","text":"Yucatán","imageLink":""},{"value":"Zacatecas","text":"Zacatecas","imageLink":""},{"value":"He vivido más años fuera de México","text":"He vivido más años fuera de México","imageLink":""}]},{"type":"dropdown","name":"question7","title":"Nivel máximo de estudios: ","isRequired":true,"choices":[{"value":"Primaria Incompleta","text":"Primaria Incompleta","imageLink":""},{"value":"Primaria Completa","text":"Primaria Completa","imageLink":""},{"value":"Secundaria Incompleta","text":"Secundaria Incompleta","imageLink":""},{"value":"Secundaria Completa","text":"Secundaria Completa","imageLink":""},{"value":"Carrera comercial","text":"Carrera comercial","imageLink":""},{"value":"Carrera técnica","text":"Carrera técnica","imageLink":""},{"value":"Preparatoria Incompleta","text":"Preparatoria Incompleta","imageLink":""},{"value":"Preparatoria Completa","text":"Preparatoria Completa","imageLink":""},{"value":"Licenciatura Incompleta","text":"Licenciatura Incompleta","imageLink":""},{"value":"Licenciatura Completa","text":"Licenciatura Completa","imageLink":""},{"value":"Posgrado Incompleto","text":"Posgrado Incompleto","imageLink":""},{"value":"Posgrado Completo","text":"Posgrado Completo","imageLink":""}]},{"type":"radiogroup","name":"question8","title":"¿Con cuál(es) de las siguientes identidades te identificas?","isRequired":true,"choices":[{"value":"Indígena","text":"Indígena","imageLink":""},{"value":"Afromexicana/o o afrodescendiente","text":"Afromexicana/o o afrodescendiente","imageLink":""},{"value":"Ninguna de las anteriores","text":"Ninguna de las anteriores","imageLink":""},{"value":"Prefiero no responder","text":"Prefiero no responder","imageLink":""}]},{"type":"radiogroup","name":"question9","title":"¿Cuál es tu idioma principal?","isRequired":true,"choices":[{"value":"Español","text":"Español","imageLink":""},{"value":"Lengua indígena","text":"Lengua indígena","imageLink":""},{"value":"Otro","text":"Otro","imageLink":""},{"value":"Prefiero no responder","text":"Prefiero no responder","imageLink":""}]}],"themeVariables":{"--sjs-primary-backcolor":"#000000","--sjs-general-forecolor":"#000000"}}, name: "SurveyComponent_1", min_width: "908px" }],
+require_response: true,
+__canvasStyles: {"backgroundColor":"#ffffff","width":1920,"height":1080,"fullScreen":false,"progressBar":false}}];
+    const demographics_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+require_response: jsPsych.timelineVariable("require_response"),
+__canvasStyles: jsPsych.timelineVariable("__canvasStyles"),
+data: {
+    rt: "rt",
+    trial_id: 1789689653852,
+    builder_id: 1789689653852,
+    trial_name: "demographics",
+    
+    
+    branches: [1789753167925],
+    branchConditions: [undefined] 
+    
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      // For trials outside loops, use window.branchCustomParameters
+      if (window.branchCustomParameters && typeof window.branchCustomParameters === 'object') {
+        Object.entries(window.branchCustomParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Find the question in survey_json.elements
+                    const elements = fieldArray[compIndex].survey_json.elements || [];
+                    const questionIndex = elements.findIndex(q => q.name === questionName);
+                    
+                    if (questionIndex !== -1) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        fieldArray[compIndex].survey_json.elements[questionIndex].defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+        // Clear the custom parameters after applying them
+        window.branchCustomParameters = null;
+      }
+      
+    },
+    
+    on_finish: function(data) {
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data,
+        [1789753167925],
+        []
+      );
+      const nextTrialId = branchDecision.targetId;
+      if (nextTrialId !== null && nextTrialId !== undefined) {
+        window.nextTrialId = nextTrialId;
+        window.skipRemaining = true;
+        window.branchingActive = true;
+        window.branchCustomParameters = branchDecision.customParameters;
+        if (window.ExpBuilderRuntime) {
+          window.ExpBuilderRuntime.emit('branch-decision', {
+            sourceId: data.builder_id ?? data.trial_id ?? data.loop_id ?? null,
+            targetId: nextTrialId,
+            conditionId: branchDecision.conditionId,
+            usedDefault: branchDecision.usedDefault,
+            scope: 'global'
+          });
+        }
+      }
+  
+    },};
+    const demographics_procedure = {
+    timeline: 
+    [demographics_timeline],
+    timeline_variables: test_stimuli_demographics,
+    
+    conditional_function: function() {
+      const currentId = 1789689653852;
+      
+      const navigationDecision =
+        window.ExpBuilderNavigation?.enterItem(currentId, 'trial');
+      if (navigationDecision !== null && navigationDecision !== undefined) {
+        return navigationDecision;
+      }
+      
+      // Si skipRemaining está activo (branching normal), verificar si este es el trial objetivo
+      if (window.skipRemaining) {
+        if (String(currentId) === String(window.nextTrialId)) {
+          window.ExpBuilderRuntime?.emit('branch-target-enter', {
+            targetId: currentId
+          });
+          window.skipRemaining = false;
+          window.nextTrialId = null;
+          return true;
+        }
+        return false;
+      }
+      
+      return true;
+    },
+  
+    
+    };
+    timeline.push(demographics_procedure);
+  
+
+
+const test_stimuli_Instrucciones = [{components: [{ type: "TextComponent", coordinates: {"x":0,"y":54.44913186536492}, zIndex: 1, text: "Instrucciones", font_color: "#000000", font_size: 42, font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_1", _font_size_runtime_vw: 2.1875 }, { type: "TextComponent", coordinates: {"x":0,"y":0}, zIndex: 2, text: "A continuación verás fotografías de rostros de niños mostrando distintas expresiones.\n\nIdentifica la emoción que expresa cada rostro seleccionando una de las siguientes opciones:\n\n\n\nPrimero realizarás algunos ejemplos de práctica para familiarizarte con la tarea.\n\nLa práctica comenzará cuando presiones “Siguiente”.", font_color: "#000000", font_size: 30, font_family: "sans-serif", font_weight: "normal", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_2", _font_size_runtime_vw: 1.5625 }, { type: "TextComponent", coordinates: {"x":0,"y":0}, zIndex: 3, text: "Felicidad · Tristeza · Enojo · Miedo · Sorpresa · Asco · Neutral", font_color: "#000000", font_size: 32, font_family: "sans-serif", font_weight: "bold", font_style: "normal", text_align: "center", line_height: 1.5, background_color: "transparent", padding: "0px", border_radius: 0, border_color: "transparent", border_width: 0, name: "TextComponent_3", _font_size_runtime_vw: 1.6666666666666667 }],
+response_components: [{ type: "ButtonResponseComponent", coordinates: {"x":0,"y":-50}, zIndex: 4, choices: ["Siguiente"], button_color: "#ffffff", button_text_color: "#000000", button_font_size: 20, button_border_radius: 3, button_border_color: "#000000", button_border_width: 1, button_padding: "6px 14px", name: "ButtonResponseComponent_1", _button_font_size_runtime_vw: 1.0416666666666665 }],
+__canvasStyles: {"backgroundColor":"#ffffff","width":1920,"height":1080,"fullScreen":false,"progressBar":false}}];
+    const Instrucciones_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+__canvasStyles: jsPsych.timelineVariable("__canvasStyles"),
+data: {
+    rt: "rt",
+    trial_id: 1789753167925,
+    builder_id: 1789753167925,
+    trial_name: "Instrucciones",
+    
+    
+    branches: [1789755712438],
+    branchConditions: [undefined] 
+    
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      // For trials outside loops, use window.branchCustomParameters
+      if (window.branchCustomParameters && typeof window.branchCustomParameters === 'object') {
+        Object.entries(window.branchCustomParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Find the question in survey_json.elements
+                    const elements = fieldArray[compIndex].survey_json.elements || [];
+                    const questionIndex = elements.findIndex(q => q.name === questionName);
+                    
+                    if (questionIndex !== -1) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        fieldArray[compIndex].survey_json.elements[questionIndex].defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+        // Clear the custom parameters after applying them
+        window.branchCustomParameters = null;
+      }
+      
+    },
+    
+    on_finish: function(data) {
+      const branchDecision = window.ExpBuilderBranching.decide(
+        data,
+        [1789755712438],
+        []
+      );
+      const nextTrialId = branchDecision.targetId;
+      if (nextTrialId !== null && nextTrialId !== undefined) {
+        window.nextTrialId = nextTrialId;
+        window.skipRemaining = true;
+        window.branchingActive = true;
+        window.branchCustomParameters = branchDecision.customParameters;
+        if (window.ExpBuilderRuntime) {
+          window.ExpBuilderRuntime.emit('branch-decision', {
+            sourceId: data.builder_id ?? data.trial_id ?? data.loop_id ?? null,
+            targetId: nextTrialId,
+            conditionId: branchDecision.conditionId,
+            usedDefault: branchDecision.usedDefault,
+            scope: 'global'
+          });
+        }
+      }
+  
+    },};
+    const Instrucciones_procedure = {
+    timeline: 
+    [Instrucciones_timeline],
+    timeline_variables: test_stimuli_Instrucciones,
+    
+    conditional_function: function() {
+      const currentId = 1789753167925;
+      
+      const navigationDecision =
+        window.ExpBuilderNavigation?.enterItem(currentId, 'trial');
+      if (navigationDecision !== null && navigationDecision !== undefined) {
+        return navigationDecision;
+      }
+      
+      // Si skipRemaining está activo (branching normal), verificar si este es el trial objetivo
+      if (window.skipRemaining) {
+        if (String(currentId) === String(window.nextTrialId)) {
+          window.ExpBuilderRuntime?.emit('branch-target-enter', {
+            targetId: currentId
+          });
+          window.skipRemaining = false;
+          window.nextTrialId = null;
+          return true;
+        }
+        return false;
+      }
+      
+      return true;
+    },
+  
+    
+    };
+    timeline.push(Instrucciones_procedure);
+  
+
+
+const test_stimuli_practice = [{components: [],
+response_components: [],
+__canvasStyles: {"backgroundColor":"#ffffff","width":1920,"height":1080,"fullScreen":false,"progressBar":false}}];
+    const practice_timeline = {
+    type: DynamicPlugin, components: jsPsych.timelineVariable("components"),
+response_components: jsPsych.timelineVariable("response_components"),
+__canvasStyles: jsPsych.timelineVariable("__canvasStyles"),
+data: {
+    rt: "rt",
+    trial_id: 1789755712438,
+    builder_id: 1789755712438,
+    trial_name: "practice",
+    
+    
+  },
+    
+    on_start: function(trial) {
+      // Then apply custom parameters from branching conditions (higher priority)
+      // For trials outside loops, use window.branchCustomParameters
+      if (window.branchCustomParameters && typeof window.branchCustomParameters === 'object') {
+        Object.entries(window.branchCustomParameters).forEach(([key, param]) => {
+          if (param && param.source !== 'none') {
+            // Parse key to check if it's a nested survey question
+            const parts = key.split('::');
+            
+            if (parts.length === 4) {
+              // Format: fieldType::componentName::survey_json::questionName
+              const [fieldType, componentName, propName, questionName] = parts;
+              
+              if (fieldType && componentName && propName === 'survey_json' && questionName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1 && fieldArray[compIndex].survey_json) {
+                    // Find the question in survey_json.elements
+                    const elements = fieldArray[compIndex].survey_json.elements || [];
+                    const questionIndex = elements.findIndex(q => q.name === questionName);
+                    
+                    if (questionIndex !== -1) {
+                      // Apply the override value (from typed or csv)
+                      let valueToSet;
+                      if (param.source === 'typed') {
+                        valueToSet = String(param.value); // Convert to string for SurveyJS
+                      } else if (param.source === 'csv') {
+                        valueToSet = String(trial[param.value]); // Get from CSV column and convert to string
+                      }
+                      
+                      if (valueToSet !== undefined && valueToSet !== null) {
+                        fieldArray[compIndex].survey_json.elements[questionIndex].defaultValue = valueToSet;
+                      }
+                    }
+                  }
+                }
+              }
+            } else if (parts.length === 3) {
+              // Format: fieldType::componentName::property (for DynamicPlugin components)
+              const [fieldType, componentName, propName] = parts;
+              
+              if (fieldType && componentName && propName) {
+                // Find the component by name in the field array
+                const fieldArray = trial[fieldType];
+                if (Array.isArray(fieldArray)) {
+                  const compIndex = fieldArray.findIndex(c => c.name === componentName);
+                  if (compIndex !== -1) {
+                    // Apply the override value (from typed or csv)
+                    let valueToSet;
+                    if (param.source === 'typed') {
+                      valueToSet = param.value;
+                    } else if (param.source === 'csv') {
+                      valueToSet = trial[param.value];
+                    }
+                    
+                    if (valueToSet !== undefined && valueToSet !== null) {
+                      fieldArray[compIndex][propName] = valueToSet;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Normal parameter (not nested survey question)
+              if (param.source === 'typed' && param.value !== undefined && param.value !== null) {
+                trial[key] = param.value;
+              } else if (param.source === 'csv' && param.value !== undefined && param.value !== null) {
+                trial[key] = trial[param.value];
+              }
+            }
+          }
+        });
+        // Clear the custom parameters after applying them
+        window.branchCustomParameters = null;
+      }
+      
+    },
+    
+    on_finish: function(data) {
+      if (window.branchingActive) {
+        jsPsych.abortExperiment('', {});
+      }
+    },};
+    const practice_procedure = {
+    timeline: 
+    [practice_timeline],
+    timeline_variables: test_stimuli_practice,
+    
+    conditional_function: function() {
+      const currentId = 1789755712438;
+      
+      const navigationDecision =
+        window.ExpBuilderNavigation?.enterItem(currentId, 'trial');
+      if (navigationDecision !== null && navigationDecision !== undefined) {
+        return navigationDecision;
+      }
+      
+      // Si skipRemaining está activo (branching normal), verificar si este es el trial objetivo
+      if (window.skipRemaining) {
+        if (String(currentId) === String(window.nextTrialId)) {
+          window.ExpBuilderRuntime?.emit('branch-target-enter', {
+            targetId: currentId
+          });
+          window.skipRemaining = false;
+          window.nextTrialId = null;
+          return true;
+        }
+        return false;
+      }
+      
+      return true;
+    },
+  
+    
+    };
+    timeline.push(practice_procedure);
   
 
     jsPsych.run(timeline);
