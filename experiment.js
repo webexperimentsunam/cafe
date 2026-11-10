@@ -1601,7 +1601,15 @@ const m9e = decideBranch;
         }
         if (cafeOriginalImage && trial?.data) trial.data.cafe_imagen = cafeOriginalImage;
         // Clase solo en ensayos de caras; otras pantallas no se redisenan.
-        window.CAFEResponsive?.setTrialMode?.(trial?.data?.trial_name, cafeOriginalImage);
+        // Pantallas, encuestas y ensayos de caras comparten el escalado visual.
+        // Las definiciones de ensayo, respuestas y guardado se conservan.
+        if (!Array.isArray(trial?.components) || !trial.components.length) {
+          try { trial.components = jsPsych.evaluateTimelineVariable('components') || trial.components; } catch (_error) {}
+        }
+        if (!Array.isArray(trial?.response_components) || !trial.response_components.length) {
+          try { trial.response_components = jsPsych.evaluateTimelineVariable('response_components') || trial.response_components; } catch (_error) {}
+        }
+        window.CAFEResponsive?.setTrialMode?.(trial?.data?.trial_name, cafeOriginalImage, trial);
         window.ExpBuilderNavigation.checkpointTrialStart(trial?.data ?? {});
         const lastTrialData = jsPsych.data.get()
         if (lastTrialData && trial.data) {

@@ -1,127 +1,186 @@
-/* CAFE v6: la misma encuesta nativa se muestra en un panel adaptable.
-   No se ocultan preguntas, no se manipulan sus inputs ni sus valores. */
-html, body { max-width:100%; min-width:0; margin:0; }
-*, *::before, *::after { box-sizing:border-box; }
+/* CAFE v7 — toda la tarea responsive sin modificar las respuestas del plugin. */
+html,body {width:100%; min-width:0;max-width:100%;margin:0;}
+*,*::before,*::after {box-sizing:border-box;}
 body {overflow-x:hidden;}
-.jspsych-display-element:not(body) {max-width:100vw;}
-body:not(.cafe-ensayo) .jspsych-content-wrapper,
-body:not(.cafe-ensayo) .jspsych-content {max-width:100vw;}
-body:not(.cafe-ensayo) img {max-width:100%;height:auto;}
-
-body.cafe-ensayo {overflow:hidden !important; background:#eef3f5 !important;}
-/* El lienzo absoluto original queda fuera de la vista únicamente cuando
-   SurveyJS ya se encuentra renderizado dentro del nuevo panel. */
-body.cafe-ensayo .jspsych-content-wrapper.cafe-native-hidden {
-  position:fixed !important; inset:0 !important;
-  width:0 !important; max-width:0 !important; height:0 !important;
-  max-height:0 !important; padding:0 !important; margin:0 !important;
-  overflow:hidden !important; visibility:hidden !important;
-  pointer-events:none !important;
+body.cafe-ensayo,body.cafe-formulario,body.cafe-informacion {
+  overflow:hidden !important;
+  background:#eef3f5!important;
 }
-#cafe-evaluation-shell {
-  position:fixed; inset:0; z-index:2147482000;
-  display:grid; grid-template-columns:minmax(180px,275px) minmax(0,650px);
-  gap:clamp(14px,3vw,42px); justify-content:center; align-items:stretch;
-  padding:clamp(12px,2vw,26px); background:#eef3f5; color:#213c4a;
-  font:400 15px/1.45 system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+/* Ocultar la escena absoluta de ExpBuilder SOLO cuando el portal ya tenga
+   los controles nativos de la pantalla. Nunca se ocultan antes del render. */
+body .jspsych-content-wrapper.cafe-native-hidden {
+  position:fixed!important;inset:0!important;max-width:0!important;width:0!important;
+  height:0!important;max-height:0!important;margin:0!important;padding:0!important;
+  overflow:hidden!important;visibility:hidden!important;pointer-events:none!important;
 }
-#cafe-evaluation-shell .cafe-face-card {
-  min-width:0; align-self:center; display:flex;flex-direction:column;align-items:center;
-  gap:12px; padding:16px; border:1px solid #dae5ea; border-radius:15px;
-  background:#fff;box-shadow:0 7px 28px rgba(35,68,83,.08);
+/* Información, consentimiento, instrucciones, bienvenida y cierre */
+#cafe-info-shell {
+  position:fixed;inset:0;z-index:2147482000;
+  overflow:hidden;display:flex;align-items:stretch;justify-content:center;
+  padding:clamp(10px,2.6vmin,24px);background:#eef3f5;
+  color:#20333f;font:400 clamp(15px,1.35vw,17px)/1.55 system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
 }
-#cafe-evaluation-shell .cafe-face-caption {
-  color:#5b7481; font-size:11px;letter-spacing:.07em;font-weight:700;
-  text-align:center;
+#cafe-info-shell .cafe-info-card {
+  display:flex;flex-direction:column;min-width:0;min-height:0;
+  width:min(100%,930px);border:1px solid #dce6ec;border-radius:15px;
+  background:#fff;box-shadow:0 8px 32px rgba(30,60,75,.08);overflow:hidden;
 }
-#cafe-evaluation-shell .cafe-face-image {
-  display:block; max-width:100%; width:auto; height:auto;
-  max-height:min(65dvh,420px); object-fit:contain; border-radius:7px;
-}
-#cafe-evaluation-shell .cafe-survey-card {
-  min-width:0; height:100%; min-height:0;
-  display:flex; flex-direction:column; border:1px solid #dce6ec;
-  border-radius:15px; background:white;
-  box-shadow:0 10px 30px rgba(30,60,75,.07); overflow:hidden;
-}
-#cafe-evaluation-shell #cafe-survey-slot {
-  width:100%; max-width:100%; min-width:0; min-height:0; flex:1;
-  overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain;
-  padding:clamp(10px,2vw,22px) clamp(8px,2vw,20px) 25px;
+#cafe-info-shell .cafe-info-body {
+  min-width:0;min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:clamp(16px,3.7vw,34px) clamp(16px,4.5vw,54px);
   scrollbar-gutter:stable;
 }
-#cafe-evaluation-shell .cafe-survey-loading {text-align:center;color:#617988;margin:32px 0;}
-/* Neutralizar solo coordenadas del host movido (no los inputs de SurveyJS). */
-#cafe-evaluation-shell .cafe-survey-native-host {
-  position:static !important; inset:auto !important; top:auto !important;
-  left:auto !important; right:auto !important; bottom:auto !important;
-  transform:none !important; float:none !important;
-  width:100% !important; min-width:0 !important; max-width:100% !important;
-  height:auto !important; min-height:0 !important; max-height:none !important;
-  margin:0 !important; padding:0 !important; overflow:visible !important;
+#cafe-info-shell .cafe-info-body * {
+  max-width:100%;box-sizing:border-box;overflow-wrap:break-word;
 }
+#cafe-info-shell .cafe-info-body p,
+#cafe-info-shell .cafe-info-body li {
+  font:inherit!important;line-height:1.55!important;letter-spacing:normal!important;
+  margin:0 0 .85em!important;text-align:left!important;
+}
+#cafe-info-shell .cafe-info-body li {margin-bottom:.35em!important;}
+#cafe-info-shell .cafe-info-body h1,
+#cafe-info-shell .cafe-info-body h2,
+#cafe-info-shell .cafe-info-html strong {
+  font-family:inherit!important;line-height:1.3!important;
+}
+#cafe-info-shell .cafe-info-body h1 {font-size:clamp(23px,3vw,34px)!important;margin:0 0 .9em!important;text-align:center!important;}
+#cafe-info-shell .cafe-info-html #unused {display:none;}
+#cafe-info-shell .cafe-info-html>p:empty {display:none;}
+#cafe-info-shell .cafe-info-html>h1 {font-size:clamp(24px,3.2vw,33px)!important;text-align:center!important;}
+#cafe-info-shell .cafe-info-html p:has(> strong:first-child) {margin-top:.3em!important;}
+#cafe-info-shell .cafe-info-html strong {font-weight:700!important;font-size:inherit!important;}
+#cafe-info-shell .cafe-info-html p:first-child strong {font-size:inherit!important;}
+#cafe-info-shell .cafe-info-body ul {padding-left:1.4em;margin:0 0 1.1em;}
+#cafe-info-shell .cafe-info-body img.cafe-info-logo {
+  display:block;width:min(100%,400px);max-height:125px;height:auto;object-fit:contain;
+  margin:10px auto 28px;
+}
+#cafe-info-shell .cafe-info-text {text-align:center;margin-bottom:1.2em;}
+#cafe-info-shell .cafe-info-text p {text-align:center!important;white-space:pre-line;}
+#cafe-info-shell .cafe-info-controls {
+  flex:0 0 auto;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;
+  border-top:1px solid #e0e9ee;padding:12px 20px;
+  background:#fff;
+}
+#cafe-info-shell .cafe-info-button {
+  min-height:44px;min-width:135px;padding:10px 20px;
+  border:1px solid #1c5966;border-radius:9px;background:#1c5966;
+  font:600 15px/1.2 system-ui,sans-serif;color:#fff;cursor:pointer;
+}
+#cafe-info-shell .cafe-info-button.cafe-secondary {background:white;color:#234a54;border-color:#aabec7;}
+#cafe-info-shell .cafe-info-button:disabled {opacity:.5;cursor:wait;}
+#cafe-info-shell .cafe-info-button:focus-visible {outline:3px solid #a0cad9;outline-offset:2px;}
+
+/* Evaluación / Datos demográficos: se utiliza el SurveyJS NATIVO. */
+#cafe-evaluation-shell {
+  position:fixed;inset:0;z-index:2147482000;
+  display:grid;grid-template-columns:minmax(180px,275px) minmax(0,670px);
+  gap:clamp(12px,2.6vw,36px);justify-content:center;align-items:stretch;
+  padding:clamp(12px,2vw,24px);background:#eef3f5;color:#243b46;
+  font:400 15px/1.45 system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+}
+#cafe-evaluation-shell.cafe-only-form {grid-template-columns:minmax(0,800px);}
+#cafe-evaluation-shell .cafe-face-card {
+  min-width:0;align-self:center;display:flex;flex-direction:column;align-items:center;
+  padding:14px;border:1px solid #dae5ea;border-radius:15px;background:white;
+  box-shadow:0 7px 28px rgba(35,68,83,.08);
+}
+#cafe-evaluation-shell .cafe-face-image {
+  display:block;max-width:100%;width:auto;height:auto;max-height:min(69dvh,440px);
+  object-fit:contain;border-radius:7px;
+}
+#cafe-evaluation-shell .cafe-survey-card {
+  min-width:0;min-height:0;height:100%;display:flex;flex-direction:column;
+  border:1px solid #dce6ec;border-radius:15px;background:white;overflow:hidden;
+  box-shadow:0 8px 30px rgba(30,60,75,.07);
+}
+#cafe-evaluation-shell #cafe-survey-slot {
+  width:100%;min-width:0;min-height:0;flex:1;
+  padding:clamp(10px,1.6vw,18px) clamp(7px,1.5vw,18px) 24px;
+  overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+}
+#cafe-evaluation-shell .cafe-survey-loading {text-align:center;color:#667d8b;padding:25px 8px;}
+#cafe-evaluation-shell .cafe-survey-native-host,
 #cafe-evaluation-shell .sd-root-modern,
 #cafe-evaluation-shell .sd-root-default,
 #cafe-evaluation-shell .sv-root-modern,
 #cafe-evaluation-shell .sv-root-default {
-  position:static !important; inset:auto !important;
-  transform:none !important; width:100% !important;
-  min-width:0 !important; max-width:100% !important;
-  margin:0 !important; height:auto !important;
+  position:static!important;inset:auto!important;top:auto!important;left:auto!important;
+  right:auto!important;bottom:auto!important;transform:none!important;float:none!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  margin:0!important;overflow:visible!important;
 }
+#cafe-evaluation-shell .cafe-survey-native-host {padding:0!important;}
 #cafe-evaluation-shell .sd-container-modern,
 #cafe-evaluation-shell .sd-body,
 #cafe-evaluation-shell .sd-page,
 #cafe-evaluation-shell .sd-question {min-width:0!important;max-width:100%!important;}
 #cafe-evaluation-shell .sd-container-modern,
 #cafe-evaluation-shell .sd-body,
-#cafe-evaluation-shell .sd-page {padding-inline:clamp(6px,1.6vw,16px) !important;}
-#cafe-evaluation-shell .sd-question {padding:clamp(9px,1.3vw,14px)!important; margin-bottom:9px!important;}
+#cafe-evaluation-shell .sd-page {padding-inline:clamp(3px,1vw,10px)!important;}
+#cafe-evaluation-shell .sd-question {width:100%!important;margin-bottom:10px!important;padding:clamp(8px,1vw,13px)!important;}
 #cafe-evaluation-shell .sd-question__title,
-#cafe-evaluation-shell .sd-question__title span {font-size:clamp(13px,1.5vw,15px)!important;line-height:1.35!important;}
+#cafe-evaluation-shell .sd-question__title span {font-size:clamp(13px,1.4vw,15px)!important;line-height:1.4!important;}
 #cafe-evaluation-shell .sd-title,
-#cafe-evaluation-shell .sd-header__text h3 {font-size:clamp(18px,2.2vw,23px)!important;line-height:1.3!important;}
-#cafe-evaluation-shell .sd-rating {max-width:100%!important;flex-wrap:wrap!important;}
-#cafe-evaluation-shell .sd-rating__item {min-width:35px!important;}
-#cafe-evaluation-shell .sd-rating__item-text,
-#cafe-evaluation-shell .sd-rating__item-label {font-size:13px!important;}
+#cafe-evaluation-shell .sd-header__text h3 {font-size:clamp(17px,2vw,22px)!important;line-height:1.32!important;}
 #cafe-evaluation-shell .sd-action-bar {flex-wrap:wrap!important;}
 #cafe-evaluation-shell button {max-width:100%;}
-
+/* Los SIETE puntos de cada Likert permanecen en UNA fila. Los textos de
+   extremos van arriba y no restan ancho a las siete opciones. */
+#cafe-evaluation-shell .sd-rating {
+  display:flex!important;flex-flow:row nowrap!important;flex-wrap:nowrap!important;
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  position:relative!important;align-items:center!important;
+  justify-content:space-between!important;gap:2px!important;
+  padding:24px 0 0!important;margin:0!important;
+}
+#cafe-evaluation-shell .sd-rating__min-text,
+#cafe-evaluation-shell .sd-rating__max-text {
+  position:absolute!important;top:0!important;left:0!important;
+  font:400 11px/1.2 system-ui,sans-serif!important;white-space:nowrap!important;
+  padding:0!important;max-width:48%!important;
+}
+#cafe-evaluation-shell .sd-rating__max-text {left:auto!important;right:0!important;text-align:right!important;}
+#cafe-evaluation-shell .sd-rating__item {
+  flex:1 1 0!important;min-width:0!important;width:auto!important;
+  max-width:none!important;margin:0!important;padding:0!important;
+  display:flex!important;justify-content:center!important;
+}
+#cafe-evaluation-shell .sd-rating__item-text,
+#cafe-evaluation-shell .sd-rating__item-label {
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:clamp(26px,3vw,38px)!important;height:clamp(29px,3vw,38px)!important;
+  min-width:0!important;min-height:0!important;border-radius:50%!important;
+  font:500 clamp(11px,1.1vw,13px)/1 system-ui,sans-serif!important;
+  padding:0!important;margin:0!important;
+}
+#cafe-evaluation-shell .sd-rating input[type=radio] {flex:0 0 auto;}
+/* Respuestas tipo radiogroup: el orden vertical propio de SurveyJS no cambia. */
+#cafe-evaluation-shell .sd-selectbase__column {max-width:100%!important;}
 @media(max-width:750px) {
-  #cafe-evaluation-shell {
-    padding:0;gap:0;grid-template-columns:minmax(0,1fr);
-    grid-template-rows:clamp(165px,29dvh,235px) minmax(0,1fr);
-  }
+  #cafe-info-shell {padding:0;font-size:16px;}
+  #cafe-info-shell .cafe-info-card {width:100%;height:100%;border:0;border-radius:0;}
+  #cafe-info-shell .cafe-info-body {padding:20px 17px;scrollbar-gutter:auto;}
+  #cafe-info-shell .cafe-info-controls {padding:10px 12px;gap:8px;}
+  #cafe-info-shell .cafe-info-button {flex:1 1 120px;min-width:0;}
+  #cafe-evaluation-shell {padding:0;gap:0;grid-template-columns:minmax(0,1fr);
+    grid-template-rows:clamp(150px,27dvh,220px) minmax(0,1fr);}
+  #cafe-evaluation-shell.cafe-only-form {grid-template-rows:minmax(0,1fr);}
   #cafe-evaluation-shell .cafe-face-card {
-    width:100%;height:100%;border:0;border-bottom:1px solid #dbe6eb;
-    border-radius:0;box-shadow:0 4px 16px rgba(20,45,60,.07);
-    padding:6px 12px;gap:4px;
+    width:100%;height:100%;padding:6px 10px;border:0;
+    border-radius:0;border-bottom:1px solid #dae5ea;box-shadow:0 4px 16px rgba(20,45,60,.07);
   }
-  #cafe-evaluation-shell .cafe-face-caption {font-size:10px;}
-  #cafe-evaluation-shell .cafe-face-image {
-    min-height:0; flex:1 1 0; max-height:calc(clamp(165px,29dvh,235px) - 36px);
-    height:100%; width:auto; max-width:100%; object-fit:contain;
-  }
-  #cafe-evaluation-shell .cafe-survey-card {
-    border:0; border-radius:0; box-shadow:none;
-  }
-  #cafe-evaluation-shell #cafe-survey-slot {padding:10px 8px 25px;scrollbar-gutter:auto;}
-  #cafe-evaluation-shell .sd-rating__item {min-width:31px!important;}
+  #cafe-evaluation-shell .cafe-face-image {min-height:0;flex:1 1 0;max-height:calc(clamp(150px,27dvh,220px) - 12px);
+    height:100%;max-width:100%;object-fit:contain;}
+  #cafe-evaluation-shell .cafe-survey-card {border:0;border-radius:0;box-shadow:none;}
+  #cafe-evaluation-shell #cafe-survey-slot {padding:8px 6px 22px;}
+  #cafe-evaluation-shell .sd-question {padding:8px 4px!important;}
+  #cafe-evaluation-shell .sd-rating__item-text,
+  #cafe-evaluation-shell .sd-rating__item-label {width:28px!important;height:30px!important;font-size:12px!important;}
 }
-@media(max-height:500px) and (max-width:750px) {
-  #cafe-evaluation-shell {grid-template-rows:130px minmax(0,1fr);}
-  #cafe-evaluation-shell .cafe-face-image {max-height:98px;}
-}
-
-/* Ajustes de legibilidad de las pantallas informativas conservados de v5. */
-@media(max-width:700px) {
-  body:not(.cafe-ensayo) #is4j p,
-  body:not(.cafe-ensayo) #is4j li {
-    font-size:clamp(16px,4vw,21px) !important;
-    line-height:1.43 !important;overflow-wrap:anywhere;
-  }
-  body:not(.cafe-ensayo) #iv5s strong {
-    font-size:clamp(20px,5.1vw,28px) !important;line-height:1.3 !important;
-  }
+@media(max-height:480px) and (max-width:750px) {
+  #cafe-evaluation-shell {grid-template-rows:125px minmax(0,1fr);}
+  #cafe-evaluation-shell .cafe-face-image {max-height:105px;}
 }
