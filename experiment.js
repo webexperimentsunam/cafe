@@ -1274,7 +1274,10 @@ const m9e = decideBranch;
       lastRemoteAck: null,
       lastError: null,
       pendingRemote: 0,
-      experimentVersion: 'CAFE-v3.0'
+      lastHttpStatus: null,
+      lastRequestBytesApprox: null,
+      lastAttemptedTrial: null,
+      experimentVersion: 'CAFE-v5.0'
     };
     window.CAFEBatchDiagnostics = cafeBatchDiagnostics;
 
@@ -1496,19 +1499,30 @@ const m9e = decideBranch;
       cafeBatchDiagnostics.pendingRemote = rows.length;
       for (const row of rows) {
         const { id, timestamp, createdAt, remoteAck, ackAt, ...trial } = row;
+        // Registrar metadatos de diagnostico sin exponer respuestas ni datos personales.
+        // NO modificar el cuerpo original del envio: el HTTP 500 proviene del backend.
+        const payload = JSON.stringify({
+          experimentID: '17e49b08-828f-4321-b62d-c040a5c1c3ea',
+          sessionId: trialSessionId,
+          data: trial,
+          storage: 'googledrive'
+        });
+        cafeBatchDiagnostics.lastRequestBytesApprox = payload.length;
+        cafeBatchDiagnostics.lastAttemptedTrial = {
+          trial_index: trial.trial_index ?? null,
+          trial_name: trial.trial_name ?? null,
+          hasFace: Boolean(trial.cafe_imagen),
+          hasSurvey: Boolean(trial.SurveyComponent_1_response)
+        };
         const response = await fetch('https://us-central1-test-e4cf9.cloudfunctions.net/apiData', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: '*/*' },
-          body: JSON.stringify({
-            experimentID: '17e49b08-828f-4321-b62d-c040a5c1c3ea',
-            sessionId: trialSessionId,
-            data: trial,
-            storage: 'googledrive'
-          })
+          body: payload
         });
+        cafeBatchDiagnostics.lastHttpStatus = response.status;
         if (!response.ok) throw new Error(`apiData HTTP ${response.status}: ${await response.text()}`);
         const result = await response.json();
-        if (result && result.success === false) throw new Error(result.message || 'apiData no confirmo el registro');
+        if (result?.success !== true) throw new Error(result?.message || 'apiData no confirmo el registro');
         await TrialDB.markRemoteAck(id);
         cafeBatchDiagnostics.apiConfirmed++;
         cafeBatchDiagnostics.lastRemoteAck = new Date().toISOString();
@@ -1524,6 +1538,31 @@ const m9e = decideBranch;
       });
       return request;
     }
+    // Herramientas de diagnostico y respaldo para el investigador.
+    // No se eliminan los datos al exportar. Evitar compartir este archivo por
+    // canales publicos: contiene las respuestas y datos de la sesion.
+    cafeBatchDiagnostics.reintentar = () => _cafeQueueRemoteSend();
+    cafeBatchDiagnostics.exportarRespaldoLocal = async () => {
+      const rows = await TrialDB.getForSession(trialSessionId);
+      const backup = JSON.stringify({
+        experimentID: cafeBatchDiagnostics.experimentID,
+        sessionId: trialSessionId, exportedAt: new Date().toISOString(),
+        trials: rows
+      }, null, 2);
+      const url = URL.createObjectURL(new Blob([backup], {type:'application/json'}));
+      try {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'CAFE-respaldo-' + trialSessionId + '.json';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } finally {
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+      return rows.length;
+    };
+
     // Si habia envios sin confirmar cuando se cerro el navegador, reintentarlos.
     if (resumedSession && BATCH_CONFIG.useIndexedDB) {
       _cafeQueueRemoteSend();
@@ -1562,7 +1601,7 @@ const m9e = decideBranch;
         }
         if (cafeOriginalImage && trial?.data) trial.data.cafe_imagen = cafeOriginalImage;
         // Clase solo en ensayos de caras; otras pantallas no se redisenan.
-        window.CAFEResponsive?.setTrialMode?.(trial?.data?.trial_name);
+        window.CAFEResponsive?.setTrialMode?.(trial?.data?.trial_name, cafeOriginalImage);
         window.ExpBuilderNavigation.checkpointTrialStart(trial?.data ?? {});
         const lastTrialData = jsPsych.data.get()
         if (lastTrialData && trial.data) {
