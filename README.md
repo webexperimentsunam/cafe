@@ -1,63 +1,42 @@
-# CAFE v5 — Cara visible + SurveyJS compacto y adaptable
+# CAFE v6 — Corrección de escala y recuperación de SurveyJS
 
-## Origen
-Partiendo de CAFE v4.1. Como referencia de escalado se revisó el experimento de Juicios Morales suministrado por el investigador. La adaptación para CAFE **no sustituye** SurveyJS: conserva sus cinco preguntas y sus eventos originales.
+## Problema observado en GitHub Pages con la v5
+Al mostrar la evaluación, aparecía la fotografía a la izquierda pero no las cinco preguntas de SurveyJS. Las versiones v4 y v5 alteraban el contenido de `survey_json`, agregando una sexta pregunta HTML para la fotografía y retirando el `ImageComponent` original. En v5 además se aplicaban reglas CSS amplias a la cadena de ancestros de SurveyJS. Con el complemento real de ExpBuilder estas modificaciones no produjeron el resultado previsto.
 
-## Qué se corrigió
-- **Todos los dispositivos:** evitar capas absolutas, anchuras fijas y desbordamiento horizontal del ensayo `practice` / `experiment`.
-- **Computadora (>850px):** cara fija en un panel a la izquierda; cuestionario más estrecho a la derecha, con scroll independiente.
-- **Móvil/tableta (<=850px):** cara fija arriba; cuestionario en un panel desplazable debajo. La cara no desaparece al avanzar por las cinco preguntas.
-- Se conserva el formato de los botones de respuesta de SurveyJS y sus cinco preguntas originales.
-- La cara sigue proveniendo de `cafe_stimulus`, que se guarda como `cafe_imagen` en el registro del ensayo.
-- Los demás tipos de ensayo conservan su lógica original y solo reciben límites generales de anchura y ajustes de texto en móvil.
+## Estrategia v6 (cambios de presentación únicamente)
+- `prepareStimuli` **no elimina ImageComponent, no altera `survey_json` y no agrega preguntas**. Solo conserva la ruta original en `row.cafe_stimulus`, utilizada por el interruptor de tres ítems y el campo `cafe_imagen` existente en el JS.
+- Cuando se presenta `practice` o `experiment`, se crea un panel fijo de fotografía + cuestionario. El **SurveyJS original, con sus propios controles y manejadores**, se reubica visualmente dentro de la columna compacta. No se crea una encuesta independiente.
+- La interfaz de ExpBuilder queda ocultada únicamente después de detectar y reubicar el cuestionario. Si SurveyJS no llega a renderizar, se restaura automáticamente la vista original después de 6 segundos en vez de dejar un panel vacío.
+- En computador (>750 px): rostro a la izquierda, cuestionario a la derecha con desplazamiento. En móvil (<=750 px): rostro fijo arriba, cuestionario desplazable debajo. La fotografía conserva su proporción y no se recorta.
+- `CAFE_MODO_PRUEBA = true` permanece en `index.html` (tres caras principales + tres ensayos originales de práctica).
 
-## Qué NO se cambió
-- Orden de estímulos ni bucles, los 1,192 estímulos principales y tres de práctica, sus preguntas, escalas, condiciones y validaciones.
-- `window.CAFE_MODO_PRUEBA = true` en index.html (3 principales + 3 de práctica). Cambiar a false cuando se autorice la recolección completa.
-- Identificador del experimento, Firebase, IndexedDB local, `batchSize = 1`, configuración de guardado remoto (`useIndexedDB = false` en Firebase), reanudación y `apiDataComplete`.
-- Las llamadas remotas `apiData` mantienen el mismo JSON. **No se corrigió un error de backend con modificaciones hipotéticas del payload.**
+## Qué NO cambia
+- `experiment.js` **idéntico bit por bit a la v5**. No hace falta reemplazarlo en GitHub si ya publicaste la v5.
+- Los 1192 estímulos principales, la práctica, las 5 preguntas originales, orden y valores de sus opciones y validaciones, aleatorización, ramificaciones, datos y tiempos.
+- Firebase, IndexedDB, recuperación, guardado con `batchSize=1`, uso de `useIndexedDB=false` en Firebase, `apiData` y `apiDataComplete`.
 
-## Error 500 de apiData: importante
-Se ha reportado HTTP 500 (Internal Server Error) de `https://us-central1-test-e4cf9.cloudfunctions.net/apiData`.
-Este error indica fallo de la función remota: no es una confirmación de guardado en Drive. La v5 conserva los datos locales sin marcar ACK, permite reintento y expone información diagnóstica no sensible.
+## Archivos para instalar
+El **parche** incluye tres archivos para reemplazar en la raíz de GitHub: `index.html`, `cafe-escalado.js` y `cafe-escalado.css`. `index.html` carga `cafe-escalado.js?v=6` y `cafe-escalado.css?v=6` para evitar caché. Conservar `experiment.js` y `img/` sin cambios.
 
-En consola:
+## Diagnóstico en la consola de Chrome
+Al llegar a una fotografía, ejecutar:
+
 ```js
-window.CAFEBatchDiagnostics
-```
-Campos relevantes: `lastHttpStatus`, `lastError`, `pendingRemote`, `apiConfirmed`, `lastRequestBytesApprox` y `lastAttemptedTrial`.
-
-Para reintentar manualmente (cuando el servidor se haya reparado):
-```js
-await window.CAFEBatchDiagnostics.reintentar()
+window.CAFELayoutDiagnostics
 ```
 
-Para descargar un respaldo JSON de **la sesión activa**, sin borrar su copia local:
-```js
-await window.CAFEBatchDiagnostics.exportarRespaldoLocal()
-```
-**Atención:** contiene respuestas de participantes: protegerlo y no compartirlo en canales públicos.
+Esperado: `version:"6.0"`, `currentTrial:"practice"` o `"experiment"`, `surveyFound:true`, `surveyVisible:true` y `originalQuestions` igual o superior a 5. En una sesión real pueden existir también elementos HTML internos en el DOM del formulario; comprobar que sean cinco preguntas respondibles.
 
-Solicitar al desarrollador de ExpBuilder los logs de Cloud Functions de `apiData` para el experimento `17e49b08-828f-4321-b62d-c040a5c1c3ea`. Verificar permisos, destino Drive y manejo de los campos SurveyJS. El error 401 es una solicitud distinta: identificar primero su URL en Network. No borrar IndexedDB ni usar datos reales hasta recibir ACK del servidor.
+## Pruebas locales efectuadas
+- `node --check` y prueba VM del flujo con tres caras originales y cinco preguntas, guardado local, subida, fallo de red simulado, reanudación y nueva sesión.
+- Chromium con estructura DOM que reproduce una pantalla ExpBuilder/SurveyJS: tamaños de 320, 375, 390, 768, 851, 1024 y 1366 px; cinco preguntas visibles; cara real con proporción correcta; sin desbordamiento horizontal; control de radio funcional; limpieza al avanzar de pantalla.
+- **Pendiente**: probar con el complemento real de ExpBuilder + SurveyJS en GitHub Pages. No se ha podido descargar aquí esa dependencia externa, de modo que estas pruebas no equivalen a un ensayo de extremo a extremo.
 
-## Instalación en GitHub Pages
-Subir al repositorio cuatro archivos de la raíz:
-- `index.html`
-- `experiment.js`
-- `cafe-escalado.js`
-- `cafe-escalado.css`
+## Problema independiente de guardado
+En la v5 el servidor de ExpBuilder respondió `POST /apiData → HTTP 500` y también se observó una solicitud HTTP 401 de URL aún no confirmada. La v6 no modifica la API ni resuelve esos errores. `IndexedDB` conserva los ensayos sin confirmación remota, pero **Google Drive no debe considerarse actualizado**.
 
-No hace falta volver a subir `img/` si ya está disponible. Los nombres del script y CSS usan `?v=5` para evitar caché.
+Pedir al desarrollador revisar los logs de la Cloud Function `apiData` para el experimento `17e49b08-828f-4321-b62d-c040a5c1c3ea`. Antes de recolectar datos, verificar `window.CAFEBatchDiagnostics.apiConfirmed` y que `pendingRemote` se reduzca, además de revisar el CSV de Drive.
 
-## Pruebas
-1. Iniciar en dispositivo de 320, 375 o 390 px. Verificar que la cara permanezca visible mientras se desplazan las cinco preguntas; completar el cuestionario y avanzar.
-2. Repetir en escritorio de 1024 px o más. Ver cara a la izquierda, cuestionario más estrecho a la derecha.
-3. Confirmar fotografía correcta para cada ensayo y columnas de respuesta `question1` a `question5`.
-4. Verificar que `CAFEBatchDiagnostics.apiConfirmed` aumente y `pendingRemote` baje a cero. Si vuelve HTTP 500, no asumir guardado remoto.
-5. Probar abandono, reanudación y finalización únicamente después de confirmar el backend.
+No borrar datos de IndexedDB ni los datos de navegación con sesiones incompletas; una copia privada se obtiene con `await window.CAFEBatchDiagnostics.exportarRespaldoLocal()`.
 
-## Validación local realizada
-- `node --check` de ambos JS.
-- Pruebas VM simulando IndexedDB, Firebase y apiData: guardado por ensayo, reintento tras falla, asociación imagen + SurveyJS, reanudación y sesión nueva.
-- Pruebas DOM y CSS en Chromium a 320, 375, 390, 768, 851, 1024 y 1366 px sin desbordamiento horizontal; imagen fija fuera del panel desplazable.
-- El proyecto requiere prueba final en GitHub Pages con el componente real de ExpBuilder + SurveyJS y conexión remota.
+**Observación**: la captura de la incidencia muestra Chrome en modo incógnito. IndexedDB en una sesión de incógnito no ofrece recuperación una vez cerradas todas las ventanas de incógnito. Usar una ventana normal del mismo navegador al probar el regreso a la sesión.
