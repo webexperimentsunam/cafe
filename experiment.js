@@ -57,7 +57,8 @@
             const trial = cursor.value;
             const age = now - (trial.createdAt || now);
             
-            if (age > expirationTime) {
+            const activeSessionId = localStorage.getItem(_publicStorageKeys.sessionId);
+            if (age > expirationTime && trial.sessionId !== activeSessionId) {
               cursor.delete();
               deletedCount++;
             }
@@ -83,7 +84,8 @@
           ...trial,
           timestamp: Date.now(),
           createdAt: Date.now(),
-          sessionId: trialSessionId
+          sessionId: trialSessionId,
+          remoteAck: false
         });
         
         request.onsuccess = () => resolve(request.result);
@@ -100,6 +102,41 @@
         
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
+      });
+    },
+
+    // Consultar solamente la sesion activa. No mezclar participantes ni borrar
+    // la copia local cuando el servidor confirme el envio de un ensayo.
+    async getForSession(sessionId) {
+      const all = await this.getAll();
+      return all.filter(row => row.sessionId === sessionId).sort((a, b) => a.id - b.id);
+    },
+
+    async markRemoteAck(id) {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const tx = this.db.transaction([this.storeName], 'readwrite');
+        const store = tx.objectStore(this.storeName);
+        const req = store.get(id);
+        req.onsuccess = () => {
+          if (req.result) store.put({ ...req.result, remoteAck: true, ackAt: Date.now() });
+        };
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+    },
+
+    async clearSession(sessionId) {
+      const rows = await this.getForSession(sessionId);
+      if (!rows.length) return;
+      return new Promise((resolve, reject) => {
+        const tx = this.db.transaction([this.storeName], 'readwrite');
+        const store = tx.objectStore(this.storeName);
+        rows.forEach(row => store.delete(row.id));
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
       });
     },
 
@@ -917,6 +954,45 @@ const m9e = decideBranch;
   // Set JSPSYCH_SESSION_ID immediately so file uploads always have the current sessionId
   window.JSPSYCH_SESSION_ID = trialSessionId;
 
+  // La eleccion se hace ANTES de crear/recuperar la sesion en Firebase.
+  function _cafeNewSessionID() {
+    return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID() : `cafe-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+  function _cafeChooseResume() {
+    return new Promise(resolve => {
+      const backdrop = document.createElement('div');
+      backdrop.id = 'cafe-reanudar-dialogo';
+      backdrop.setAttribute('role', 'dialog');
+      backdrop.setAttribute('aria-modal', 'true');
+      backdrop.setAttribute('aria-label', 'Recuperar sesion');
+      backdrop.style.cssText = 'position:fixed;inset:0;z-index:10002;background:rgba(12,25,35,.67);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Arial,sans-serif;';
+      const panel = document.createElement('div');
+      panel.style.cssText = 'box-sizing:border-box;background:#fff;color:#173046;width:min(100%,520px);padding:28px;border-radius:14px;box-shadow:0 12px 50px #0004;';
+      const title = document.createElement('h2');
+      title.textContent = 'Tienes una sesion de CAFE sin terminar';
+      title.style.cssText = 'font-size:24px;line-height:1.25;margin:0 0 14px;';
+      const info = document.createElement('p');
+      info.textContent = 'Puedes continuar desde la ultima pantalla guardada o iniciar una participacion nueva. Las respuestas de la sesion anterior no se eliminan de Google Drive.';
+      info.style.cssText = 'line-height:1.55;margin:0 0 20px;';
+      const choices = document.createElement('div');
+      choices.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap;';
+      for (const [text, decision, bg, fg] of [
+        ['Continuar donde me quede','resume','#173046','#fff'],
+        ['Empezar desde el principio','new','#e6eef2','#173046']
+      ]) {
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.textContent = text;
+        btn.style.cssText = `cursor:pointer;flex:1 1 180px;padding:14px 12px;border:0;border-radius:7px;font-weight:600;font-size:15px;background:${bg};color:${fg}`;
+        btn.addEventListener('click', () => { backdrop.remove(); resolve(decision); }, { once:true });
+        choices.appendChild(btn);
+      }
+      panel.append(title, info, choices); backdrop.appendChild(panel);
+      document.body.appendChild(backdrop);
+      choices.querySelector('button').focus();
+    });
+  }
+
   let participantNumber;
 
   async function createSession() {
@@ -929,7 +1005,7 @@ const m9e = decideBranch;
           experimentID: "17e49b08-828f-4321-b62d-c040a5c1c3ea",
           sessionId: trialSessionId,
           uid: Uid,
-          batchSize: 0,
+          batchSize: 1,
           ...(_preSessionName ? { sessionName: _preSessionName } : {})
         }),
       });
@@ -1143,18 +1219,64 @@ const m9e = decideBranch;
     }
 
 
-    const resumeRaw = localStorage.getItem("expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:resume-trial");
+    // Si el navegador reconoce una sesion anterior, pedir una decision al participante.
+    // Cambiar de modo prueba a modo completo entre visitas invalida los indices del loop.
+    const cafeModeKey = 'expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-test-mode';
+    const oldMode = localStorage.getItem(cafeModeKey);
+    const currentMode = window.CAFE_MODO_PRUEBA === true ? 'test' : 'full';
+    let isFreshChoice = false;
+    if (isResuming) {
+      const decision = await _cafeChooseResume();
+      const incompatibleMode = oldMode !== null && oldMode !== currentMode;
+      if (decision === 'new' || incompatibleMode) {
+        if (incompatibleMode && decision !== 'new') {
+          alert('La configuracion de la tarea cambio desde tu ultima visita. Debes comenzar una sesion nueva.');
+        }
+        trialSessionId = _cafeNewSessionID();
+        isResuming = false;
+        isFreshChoice = true;
+        storedParticipantNumber = null;
+        window.JSPSYCH_SESSION_ID = trialSessionId;
+        localStorage.removeItem(_publicStorageKeys.sessionId);
+        localStorage.removeItem(_publicStorageKeys.participant);
+        localStorage.removeItem(_publicStorageKeys.resumeTrial);
+      }
+    }
+    if (!isResuming) localStorage.setItem(cafeModeKey, currentMode);
+    const resumeRaw = isResuming ? localStorage.getItem(_publicStorageKeys.resumeTrial) : null;
     const resumeRouteDecision = isResuming && resumeRaw ? _resolveResumeBranch(resumeRaw) : null;
-    if (isResuming && resumeRaw && !resumeRouteDecision) throw new Error('The saved navigation checkpoint is invalid');
+    if (isResuming && resumeRaw && !resumeRouteDecision) {
+      throw new Error('La sesion guardada no coincide con la version actual del experimento. Inicia una nueva sesion.');
+    }
   
     
     // --- Configuración de Batching (cargada desde Firestore) ---
     const BATCH_CONFIG = {
-      size: 0,
+      size: 1,
       currentBatchNumber: 0,
-      resumeTimeoutMinutes: 30,
+      resumeTimeoutMinutes: 1,
       useIndexedDB: true
     };
+    // Solucion validada en Juicios Morales: la copia local se mantiene en
+    // IndexedDB, pero Firebase recibe false para permitir la consolidacion
+    // de CSV parciales tras la desconexion.
+    const FIREBASE_SESSION_USE_INDEXEDDB = false;
+    const cafeBatchDiagnostics = {
+      experimentID: '17e49b08-828f-4321-b62d-c040a5c1c3ea',
+      get sessionId() { return trialSessionId; },
+      get batchSize() { return BATCH_CONFIG.size; },
+      get resumeTimeoutMinutes() { return BATCH_CONFIG.resumeTimeoutMinutes; },
+      get useIndexedDB() { return BATCH_CONFIG.useIndexedDB; },
+      firebaseSessionUseIndexedDB: FIREBASE_SESSION_USE_INDEXEDDB,
+      get resumedSession() { return resumedSession; },
+      get freshChoice() { return isFreshChoice; },
+      apiConfirmed: 0,
+      lastRemoteAck: null,
+      lastError: null,
+      pendingRemote: 0,
+      experimentVersion: 'CAFE-v3.0'
+    };
+    window.CAFEBatchDiagnostics = cafeBatchDiagnostics;
 
     // Inicializar IndexedDB solo si está habilitado
     if (BATCH_CONFIG.useIndexedDB) {
@@ -1165,18 +1287,11 @@ const m9e = decideBranch;
     let resumedSession = false;
     
     if (BATCH_CONFIG.useIndexedDB) {
-      const existingTrials = await TrialDB.getAll();
-      
-      if (existingTrials.length > 0) {
-        const lastTrial = existingTrials[existingTrials.length - 1];
-        
-        if (lastTrial.sessionId === trialSessionId) {
-          BATCH_CONFIG.currentBatchNumber = Math.floor(existingTrials.length / (BATCH_CONFIG.size || 1));
-          resumedSession = true;
-        } else {
-          await TrialDB.clear();
-        }
-      }
+      const existingTrials = await TrialDB.getForSession(trialSessionId);
+      resumedSession = isResuming && (existingTrials.length > 0 || Boolean(resumeRouteDecision));
+      BATCH_CONFIG.currentBatchNumber = existingTrials.filter(row => row.remoteAck).length;
+      cafeBatchDiagnostics.pendingRemote = existingTrials.filter(row => !row.remoteAck).length;
+      // Las filas de sesiones anteriores se mantienen separadas; no hacer clear().
     }
     
     // SIEMPRE llamar a createSession (para crear documento en Firestore)
@@ -1187,8 +1302,8 @@ const m9e = decideBranch;
     // If session name has counter token, generate final name now that participantNumber is known
     if (_sessionNameHasDynamic() && typeof participantNumber === 'number' && !isNaN(participantNumber)) {
       const _finalName = _generateSessionName(participantNumber);
-      if (_finalName) {
-        // Session IDs are durable identities. The generated name is display metadata.
+      if (_finalName && !isResuming) {
+        // Conservar el nombre original si el participante reanuda dias despues.
         _updateSessionName(trialSessionId, _finalName);
       }
     }
@@ -1212,19 +1327,23 @@ const m9e = decideBranch;
 
     // --- Configurar onDisconnect para finalizar sesión automáticamente ---
     const sessionRef = db.ref('sessions/17e49b08-828f-4321-b62d-c040a5c1c3ea/' + trialSessionId);
-    await sessionRef.set({
+    await sessionRef.update({
       connected: true,
+      // Al regresar de una desconexion hay que reabrir la sesion sin borrar
+      // su identificador ni sus datos remotos previamente consolidados.
+      finished: false,
+      needsFinalization: false,
       experimentID: '17e49b08-828f-4321-b62d-c040a5c1c3ea',
       sessionId: trialSessionId,
       participantNumber: participantNumber,
-      startedAt: window.firebase.database.ServerValue.TIMESTAMP,
+      ...(!isResuming ? { startedAt: window.firebase.database.ServerValue.TIMESTAMP } : {}),
       storage: 'googledrive',
       storageProvider: 'googledrive',
       state: resumedSession ? 'resumed' : 'initiated',
       lastUpdate: window.firebase.database.ServerValue.TIMESTAMP,
       metadata: metadata,
       resumeTimeoutMinutes: BATCH_CONFIG.resumeTimeoutMinutes,
-      useIndexedDB: BATCH_CONFIG.useIndexedDB
+      useIndexedDB: FIREBASE_SESSION_USE_INDEXEDDB
     });
     
     sessionRef.onDisconnect().update({
@@ -1357,15 +1476,57 @@ const m9e = decideBranch;
         return res.json();
       })
       .then(result => {
-        if (result && result.success) {
-          console.log('Complete experiment sent successfully to storage');
+        if (!result || result.success !== true) {
+          throw new Error(result?.message || 'apiDataComplete no confirmo el archivo completo');
         }
+        console.log('Complete experiment sent successfully to storage');
         return result;
       })
       .catch(error => {
         console.error('Error in sendCompleteExperiment:', error);
         throw error;
       });
+    }
+
+    // Cola serial: una peticion apiData por ensayo, sin modificar la estructura
+    // del registro. Un ensayo CAFE conserva imagen + respuesta de SurveyJS juntas.
+    let remoteSendQueue = Promise.resolve();
+    async function _cafeFlushPending() {
+      const rows = (await TrialDB.getForSession(trialSessionId)).filter(row => !row.remoteAck);
+      cafeBatchDiagnostics.pendingRemote = rows.length;
+      for (const row of rows) {
+        const { id, timestamp, createdAt, remoteAck, ackAt, ...trial } = row;
+        const response = await fetch('https://us-central1-test-e4cf9.cloudfunctions.net/apiData', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: '*/*' },
+          body: JSON.stringify({
+            experimentID: '17e49b08-828f-4321-b62d-c040a5c1c3ea',
+            sessionId: trialSessionId,
+            data: trial,
+            storage: 'googledrive'
+          })
+        });
+        if (!response.ok) throw new Error(`apiData HTTP ${response.status}: ${await response.text()}`);
+        const result = await response.json();
+        if (result && result.success === false) throw new Error(result.message || 'apiData no confirmo el registro');
+        await TrialDB.markRemoteAck(id);
+        cafeBatchDiagnostics.apiConfirmed++;
+        cafeBatchDiagnostics.lastRemoteAck = new Date().toISOString();
+        cafeBatchDiagnostics.pendingRemote--;
+        cafeBatchDiagnostics.lastError = null;
+      }
+    }
+    function _cafeQueueRemoteSend() {
+      const request = remoteSendQueue.then(_cafeFlushPending);
+      remoteSendQueue = request.catch(error => {
+        cafeBatchDiagnostics.lastError = String(error?.message || error);
+        console.error('CAFE: no se pudo enviar la cola de datos; se conserva en IndexedDB', error);
+      });
+      return request;
+    }
+    // Si habia envios sin confirmar cuando se cerro el navegador, reintentarlos.
+    if (resumedSession && BATCH_CONFIG.useIndexedDB) {
+      _cafeQueueRemoteSend();
     }
 
     // Clean up stale jsPsych wrappers from previous runs (prevents stacking on restarts)
@@ -1377,6 +1538,22 @@ const m9e = decideBranch;
 
 
       on_trial_start: function(trial) {
+        // La imagen y el SurveyComponent pertenecen al mismo ensayo: guardar
+        // explicitamente la ruta de la imagen sin modificar las preguntas.
+        let cafeComponents = Array.isArray(trial?.components) ? trial.components : [];
+        // ExpBuilder resuelve ImageComponent y SurveyComponent como variables de
+        // timeline. En caso de que on_trial_start aun no tenga los componentes,
+        // consultamos la misma fila de timeline que va a mostrar jsPsych.
+        if (!cafeComponents.length && ['practice', 'experiment'].includes(trial?.data?.trial_name)
+            && typeof jsPsych.evaluateTimelineVariable === 'function') {
+          const field = trial.data.trial_name === 'practice' ? 'components_practice' : 'components_experiment';
+          try { cafeComponents = jsPsych.evaluateTimelineVariable(field) || []; } catch (_error) {}
+        }
+        const cafeImage = (Array.isArray(cafeComponents) ? cafeComponents : []).find(
+          comp => comp?.type === 'ImageComponent' && typeof comp.stimulus === 'string'
+            && /\.(jpg|jpeg|png|webp)$/i.test(comp.stimulus)
+        );
+        if (cafeImage && trial?.data) trial.data.cafe_imagen = cafeImage.stimulus;
         window.ExpBuilderNavigation.checkpointTrialStart(trial?.data ?? {});
         const lastTrialData = jsPsych.data.get()
         if (lastTrialData && trial.data) {
@@ -1392,6 +1569,12 @@ const m9e = decideBranch;
 
         // Agregar timestamp del cliente para ordenamiento correcto
         data.clientTimestamp = Date.now();
+        // Clave estable de evento para auditar reinicios y evitar confundir
+        // respuestas de diferentes rostros al analizar los CSV.
+        data.clientTrialKey = `${trialSessionId}:${data.trial_index}:${data.builder_id ?? 'unknown'}:${data.clientTimestamp}:${Math.random().toString(36).slice(2, 8)}`;
+        data.session_browser = metadata.browser;
+        data.session_os = metadata.os;
+        data.session_started_at = metadata.startedAt;
         // Permite distinguir los registros de prueba de la recoleccion real.
         data.cafe_modo_prueba = window.CAFE_MODO_PRUEBA === true;
         data.sessionId = trialSessionId;
@@ -1412,34 +1595,24 @@ const m9e = decideBranch;
         }
 
         if (BATCH_CONFIG.useIndexedDB) {
-          // --- CON IndexedDB: Batching habilitado ---
+          // Siempre conservar la copia local hasta la finalizacion formal.
+          // No eliminar las filas confirmadas: la reanudacion requiere el historial.
           try {
             await TrialDB.add(data);
             window.ExpBuilderNavigation.onTrialPersisted(data);
           } catch (error) {
-            console.error('Error saving to IndexedDB:', error);
+            cafeBatchDiagnostics.lastError = 'IndexedDB: ' + String(error?.message || error);
+            console.error('CAFE: error guardando el ensayo localmente', error);
             return;
           }
-
-          // Solo enviar batches si batchSize > 0
-          if (BATCH_CONFIG.size > 0) {
-            const pendingCount = await TrialDB.count();
-            
-            // Enviar batch cuando se acumule el tamaño configurado
-            if (pendingCount >= BATCH_CONFIG.size) {
-              const batch = await TrialDB.getN(BATCH_CONFIG.size);
-              BATCH_CONFIG.currentBatchNumber++;
-              
-              // Enviar batch concatenado a Firestore
-              await sendBatchConcatenated(batch, BATCH_CONFIG.currentBatchNumber);
-              
-              // Eliminar trials enviados de IndexedDB
-              await TrialDB.deleteN(BATCH_CONFIG.size);
-              
-              console.log(`Batch #${BATCH_CONFIG.currentBatchNumber} sent, ${batch.length} trials`);
-            }
+          // batchSize = 1: enviar este registro completo (imagen + SurveyJS)
+          // y cualquier pendiente de esta misma sesion.
+          try {
+            await _cafeQueueRemoteSend();
+          } catch (error) {
+            // Sin conexion se permite continuar: los registros quedan en IndexedDB
+            // para un nuevo intento al responder otro ensayo o reanudar.
           }
-          // Si batchSize = 0, solo acumular en IndexedDB, enviar TODO en on_finish
         } else {
           // --- SIN IndexedDB: Enviar trial por trial a Firestore ---
           try {
@@ -1481,47 +1654,34 @@ const m9e = decideBranch;
         await new Promise(r => setTimeout(r, 0));
         
         try {
+          // jsPsych no espera automaticamente el on_data_update asincrono.
+          // Esta barrera evita finalizar antes de que se guarde el ultimo survey.
+          await window.ExpBuilderPersistence.whenIdle();
           if (BATCH_CONFIG.useIndexedDB) {
-          // --- CON IndexedDB: Enviar datos acumulados ---
-          
-          // Esperar cualquier batch pendiente
-          if (pendingBatchSaves.length > 0) {
-            _setLoadingMsg('Uploading batches…');
-            await Promise.allSettled(pendingBatchSaves);
-          }
-
-          const allTrials = await TrialDB.getAll();
-          
-          if (allTrials.length > 0) {
-            if (BATCH_CONFIG.size === 0) {
-              _setLoadingMsg('Uploading data…');
-              await sendCompleteExperiment(allTrials);
-              await TrialDB.clear();
-            } else {
-              BATCH_CONFIG.currentBatchNumber++;
-              _setLoadingMsg('Sending final batch…');
-              await sendBatchConcatenated(allTrials, BATCH_CONFIG.currentBatchNumber);
-              await TrialDB.clear();
-              
-              if (pendingBatchSaves.length > 0) {
-                _setLoadingMsg('Finishing upload…');
-                await Promise.allSettled(pendingBatchSaves);
-              }
+            _setLoadingMsg('Enviando las respuestas pendientes…');
+            await _cafeQueueRemoteSend();
+            const allTrials = await TrialDB.getForSession(trialSessionId);
+            if (allTrials.some(row => !row.remoteAck)) {
+              throw new Error('Todavia hay respuestas sin confirmacion del servidor');
             }
-          }
+            _setLoadingMsg('Confirmando el archivo completo en Drive…');
+            // apiDataComplete actualiza el CSV final sin cambiar el formato
+            // de los ensayos. No descartar IndexedDB hasta la confirmacion.
+            await sendCompleteExperiment(allTrials.map(({id,timestamp,createdAt,remoteAck,ackAt,...trial}) => trial));
           }
         } catch (error) {
-          console.error('Error flushing trial data:', error);
-          _setLoadingMsg(
-            'Error saving data. Your progress was preserved. Please reload to retry.'
-          );
+          console.error('CAFE: no se pudo finalizar el guardado', error);
+          cafeBatchDiagnostics.lastError = String(error?.message || error);
+          _setLoadingMsg('Error al guardar. Tu progreso sigue en este navegador. Recarga para reintentar.');
           return;
         }
-        
+
         _setLoadingMsg('Finishing up…');
         
         try {
-          const needsBackendFinalization = !(BATCH_CONFIG.useIndexedDB && BATCH_CONFIG.size === 0);
+          // apiDataComplete ya confirmo la exportacion final: evitar
+          // solicitar una segunda consolidacion del mismo archivo.
+          const needsBackendFinalization = false;
           
           await sessionRef.update({
             connected: false,
@@ -1538,10 +1698,14 @@ const m9e = decideBranch;
         }
 
         // Cancel only after the durable completed state was confirmed.
-        sessionRef.onDisconnect().cancel();
+        await sessionRef.onDisconnect().cancel();
+        if (BATCH_CONFIG.useIndexedDB) {
+          await TrialDB.clearSession(trialSessionId);
+        }
         window.ExpBuilderNavigation.clearTransientState();
         localStorage.removeItem(_publicStorageKeys.sessionId);
         localStorage.removeItem(_publicStorageKeys.participant);
+        localStorage.removeItem(cafeModeKey);
         sessionStorage.removeItem(_publicStorageKeys.captchaPassed);
 
         // --- Recruitment platform redirect ---

@@ -1,83 +1,74 @@
-# CAFE — GitHub Pages con interruptor de prueba de 3 ítems
+# CAFE — GitHub Pages: guardado incremental y reanudación (v3)
 
-## Activar/desactivar el modo de prueba
+## Objetivo
 
-Abre **`index.html`** en el repositorio y busca el bloque `cafe-configuracion` situado justo antes de la carga de `experiment.js`:
+Esta actualización parte exactamente del paquete **CAFE_GitHub_completo_prueba_3_items.zip**, que ya se ejecutó en GitHub Pages, y aplica las soluciones de almacenamiento y recuperación probadas en Juicios Morales. **No se modificaron las pantallas ni las variables de ExpBuilder, las imágenes, los cuestionarios SurveyJS, las ramas ni la aleatorización.** Se conserva el identificador del proyecto `17e49b08-828f-4321-b62d-c040a5c1c3ea` y los nombres de sesión de CAFE (`contador_CAFE_fecha`).
 
-```html
-<script id="cafe-configuracion">
-  window.CAFE_MODO_PRUEBA = true;
-</script>
+## Interruptor de prueba
+
+La configuración sigue **en `index.html`**, sin parámetros en la dirección web:
+
+```javascript
+window.CAFE_MODO_PRUEBA = true; // 3 ítems principales, más 3 de práctica
+// window.CAFE_MODO_PRUEBA = false; // 1,192 ítems principales, más 3 de práctica
 ```
 
-- **`true`**: ejecutar la tarea original, pero con **solo 3 estímulos principales**. Los **3 ensayos de práctica** se mantienen, por lo que se muestran **6 imágenes evaluables en total** (3 práctica + 3 principal).
-- **`false`**: ejecutar **los 1,192 estímulos originales del bloque principal**, además de los 3 de práctica.
+No cambies el interruptor durante una sesión de prueba sin terminar; cambiaría el conjunto de estímulos. Si la configuración cambia, el parche obliga a iniciar una participación nueva al regresar.
 
-No se modifica la URL, no se añade un parámetro de consulta y no es necesario ajustar el JavaScript al alternar los modos. Tras cambiar el valor, guarda el archivo mediante un commit en `main`, comprueba el despliegue de Pages y recarga el sitio (Ctrl+Shift+R).
+## Cambios de almacenamiento
 
-La prueba usa las fotografías **surprise_M-LA-07.jpg, surprise_M-LA-08.jpg y surprise_M-LA-09.jpg**, que ya están incluidas en el ZIP. El orden de estas tres fotos **se aleatoriza**, usando el mismo muestreador original del bucle de ExpBuilder. La selección es deliberadamente fija para que los índices de estímulos sean estables entre cargas y al reanudar una sesión. Las imágenes de prueba pertenecen a la misma categoría emocional; esta selección es **solo para pruebas técnicas**, no para una evaluación psicométrica.
+- `batchSize = 1`: cada evento de jsPsych se envía como un registro individual mediante `apiData`, sin concatenar varios ensayos en un documento.
+- **IndexedDB local activado** para conservar todas las respuestas de la sesión (incluso las ya confirmadas por el servidor), y para intentar de nuevo las que quedaron sin confirmar.
+- **Metadatos de Firebase: `useIndexedDB = false`**, como solución temporal para permitir que el backend de ExpBuilder consolide CSV parciales al desconectarse (comportamiento observado en Juicios Morales).
+- `resumeTimeoutMinutes = 1`: valor de la sesión en Firebase. No es el límite de recuperación de IndexedDB del navegador.
+- Al ingresar otra vez desde el mismo navegador, aparece una elección: **Continuar donde me quedé** o **Empezar desde el principio**. La segunda crea una identidad nueva sin borrar indiscriminadamente los registros locales de otras sesiones.
+- La recuperación conserva la navegación generada por ExpBuilder, que registra la posición y el orden aleatorio del bucle. Esa navegación se probó en forma simulada con el código actual; la reproducción visual real debe probarse en el sitio publicado.
+- Al finalizar, primero se confirman los envíos pendientes, luego se manda el conjunto completo mediante `apiDataComplete`, se marca `completed` en Firebase y, solo entonces, se borra de IndexedDB la sesión terminada.
+- Se conservaron los tokens de nombre de CAFE y se evita renombrar con fecha nueva una sesión reanudada.
 
-Cada registro incluye el nuevo campo `cafe_modo_prueba` (`true` o `false`) para distinguir datos de prueba y datos reales en los CSV. **Se usa el mismo identificador de experimento y el mismo destino de Google Drive en ambos modos**; no mezclar las sesiones de prueba con la base definitiva.
+## Imagen y encuesta en un mismo ensayo
 
-No cambies de `true` a `false` mientras haya una sesión incompleta que necesites reanudar en ese navegador: la longitud del bucle cambia y el punto de recuperación de esa sesión podría quedar incompatible. Termina las pruebas pendientes antes de cambiar de modo.
+Las filas originales de `practice` y `experiment` contienen **un `ImageComponent` y un `SurveyComponent` asociados**. No se separaron ni se cambiaron su contenido, la lógica de presentación, el orden de preguntas, el número de respuestas obligatorias, el tamaño ni la posición.
 
-## Instalación del parche
+En cada registro de ensayo se añade `cafe_imagen` con la ruta del estímulo cuando está disponible, además de los campos ya generados por SurveyJS. Se añaden `clientTrialKey` y `cafe_modo_prueba` para verificar duplicados y distinguir muestras de prueba de datos definitivos. La imagen es una **ruta**, no la fotografía codificada dentro del CSV.
 
-Si ya subiste a GitHub el paquete `CAFE_GitHub_publicable_pendiente_imagenes.zip`, reemplaza **solo los dos archivos** `index.html` y `experiment.js` que vienen en `CAFE_GitHub_parche_prueba_3_items.zip`. No hay que modificar ni volver a subir las imágenes.
+## Instalación en GitHub
 
-Si todavía no subiste el proyecto, utiliza el paquete completo de esta versión.
+Si el proyecto CAFE ya está publicado, instala únicamente **`index.html` y `experiment.js`** del ZIP de parche, sustituyendo esos dos archivos en la raíz de `main`. Los archivos `.jpg` y `.png` se mantienen sin cambios y no necesitan subirse otra vez. **Conserva una copia del proyecto que funciona actualmente.** El código del HTML ahora importa `experiment.js?v=3` para evitar la caché anterior.
 
-## Qué permanece igual
+Si todavía necesitas la estructura completa, usa el ZIP completo: contiene los mismos ocho recursos de imagen disponibles originalmente; **no contiene los 1,188 estímulos que se habían omitido deliberadamente** por el tamaño de la exportación. Debes subir las imágenes restantes al repositorio antes de pasar a la prueba completa.
 
-Se conservan todas las pantallas, instrucciones, tres ensayos de práctica, 1,192 ensayos principales de la configuración completa, preguntas, estímulos, escala, dos bucles, muestreo aleatorizado, condiciones de salida y comportamiento de guardado original (`batchSize=0`, `useIndexedDB=true`, `resumeTimeoutMinutes=30`). No se incorpora aún la modificación de Firebase/IndexedDB usada en Juicios Morales.
+## Diagnóstico
 
-**Limitación de recursos:** la versión completa seguirá necesitando las 1,188 imágenes enumeradas en `diagnostico/imagenes_faltantes.txt`. El modo de prueba de tres ítems principales usa únicamente imágenes que ya están presentes.
+En la consola de Chrome (`F12`):
 
----
+```javascript
+window.CAFEBatchDiagnostics
+```
 
-## Documentación de la adaptación original
+Valores esperados:
 
+- `batchSize: 1`
+- `useIndexedDB: true` (copia local)
+- `firebaseSessionUseIndexedDB: false` (metadatos del servidor)
+- `resumeTimeoutMinutes: 1`
+- `apiConfirmed`: cantidad de filas confirmadas mediante `apiData` en la ejecución del navegador actual
+- `pendingRemote`: filas de la sesión actual que todavía no tienen confirmación
+- `lastRemoteAck`, `lastError`, `sessionId`, `resumedSession`, `freshChoice`.
 
-Esta carpeta permite **subir a GitHub el código generado por ExpBuilder**, utilizando como base la versión de `index.html` existente en el repositorio `cafe`.
+## Prueba manual importante después de publicar
 
-## Qué contiene
-- `index.html`: conserva librerías, guardia de errores, estilos y bootstrap del antiguo GitHub. Carga `experiment.js` en vez de incrustar 5 MB en HTML.
-- `experiment.js`: bootstrap del index original **más los 5,148,447 caracteres exactos de `config.data.generatedCode`** contenidos en la exportación y el cierre correspondiente del inicializador de ExpBuilder. El bloque generado no se alteró: preserva las nueve tareas, los dos bucles y las condiciones.
-- `img/`: todos los archivos de imagen presentes en la exportación, más un alias técnico `sorprendida.png` (copia de `soprendida.png`, porque el código hace referencia a ambos nombres).
-- `diagnostico/`: lista de imágenes pendientes y resumen técnico. Esta carpeta no es necesaria para que la página cargue; facilita completar los materiales.
+1. En un navegador normal (no incógnito), hacer bienvenida, consentimiento y datos demográficos.
+2. Completar la primera fotografía principal, respondiendo **todas** las preguntas del mismo `SurveyComponent`. Verificar `apiConfirmed` y `pendingRemote`.
+3. Cerrar la pestaña. Tras la detección de desconexión, comprobar el archivo parcial en Drive.
+4. Abrir de nuevo la misma URL y pulsar **Continuar donde me quedé**. Verificar que no se mezclan la fotografía y sus respuestas, y que el siguiente estímulo corresponde al orden guardado.
+5. Volver a cerrar y entrar otra vez; seleccionar **Empezar desde el principio**. Comprobar que obtiene otro `sessionId` y se conserva la sesión parcial anterior.
+6. Realizar los tres ítems principales y terminar con **Finalizar**. Verificar archivo completo, identificador de imagen `cafe_imagen`, todas las respuestas `SurveyComponent_1_response`, sin duplicaciones de `clientTrialKey` ni de ensayos.
+7. Repetir en celular y comprobar también los diseños de la imagen y la encuesta; **este parche no altera la presentación visual de ExpBuilder**.
+8. Finalmente probar recuperación prolongada (por ejemplo, 24 horas) y luego la ejecución con los 1,192 estímulos.
 
-## Problema pendiente — imágenes
-El código generado requiere **1,197 archivos de imagen únicos**. Solo **9** están en este paquete. Faltan **1,188** imágenes, en su mayoría fotografías de expresiones faciales.
+## Alcance de la validación
 
-La exportación `CAFE-EXPBUILDER.zip` no incluye las imágenes faltantes. El ZIP `cafe-github.zip` tampoco las contiene. No sustituimos imágenes por otras ni cambiamos el número de ensayos. **El código está listo para colocar en GitHub, pero el experimento completo aún NO está listo para tomar datos.**
+Se verificaron la sintaxis y la identidad byte a byte de los dos conjuntos completos de estímulos y sus componentes SurveyJS con respecto al paquete anterior. Se ejecutó una prueba automatizada **con Firebase/Google Drive simulados**: fallo de red, conservación en IndexedDB, reanudación y reenvío de un ensayo completo de imagen+encuesta, comenzar desde cero sin borrar otra sesión y finalización correcta con `apiDataComplete`. 
 
-Consulta `diagnostico/imagenes_faltantes.txt` y coloca los archivos originales en la carpeta `img/`, respetando exactamente nombres, mayúsculas y extensiones.
-
-## Cómo publicar
-1. Conserva una copia del repositorio anterior.
-2. Descomprime este ZIP. **Sube el contenido de la carpeta**, no la carpeta contenedora: `index.html`, `experiment.js`, `img/` y opcionalmente `diagnostico/` deben estar en la raíz de `main`.
-3. En GitHub, `Settings > Pages > Source: Deploy from a branch`, `main`, `/(root)`.
-4. URL configurada en la exportación: `https://webexperimentsunam.github.io/cafe/`.
-5. Cuando tengas las imágenes completas, comprueba que ya no queda ninguna línea en `diagnostico/imagenes_faltantes.txt` al regenerar el listado, y realiza una prueba completa antes de usarlo con participantes.
-
-## Configuración original conservada
-- ID de experimento: `17e49b08-828f-4321-b62d-c040a5c1c3ea`.
-- Guardado configurado: `googledrive`.
-- `fullScreen = false`, `progressBar = false`.
-- 9 tipos de ensayo: Bienvenida, Consentimiento, Demographics, no_consent, Instructions, practice, preparation, experiment, Ending.
-- Dos bucles, ambos aleatorios, sin cambios de estímulos.
-- Sesiones de prueba en `sessionResults` **no se incluyeron** en el sitio público para evitar publicar respuestas de participantes.
-
-**Nota sobre la persistencia:** el código anterior de GitHub usa el guardado original de ExpBuilder (`batchSize=0`, `useIndexedDB=true`, `resumeTimeoutMinutes=30`), que se preservó tal cual para esta primera adaptación. No se aplicó todavía el parche usado en Juicios Morales; habrá que probar el destino de Google Drive y el registro de sesiones, sin asumir equivalencia entre experimentos.
-
-## Verificaciones realizadas
-- `node --check experiment.js`.
-- Script generado por ExpBuilder idéntico al de la exportación.
-- Rutas de todos los archivos disponibles verificadas; inventario completo generado.
-- Los 9 tipos y los 2 bucles conservados.
-
-## Pendiente antes de recolectar datos
-- Agregar **1,188** imágenes que faltan.
-- Abrir las 9 pantallas y comprobar escalas, preguntas, aleatorización y apariencia en escritorio/celular.
-- Verificar persistencia de respuestas con Google Drive, sesiones interrumpidas y posible reanudación.
-- Revisar consentimiento/uso de imágenes con el equipo investigador.
+**No se ha verificado la publicación de esta nueva versión ni la creación/actualización real del CSV en Drive.** La compatibilidad del backend con este parche debe validarse en GitHub Pages antes de utilizarlo con participantes reales. No usar los CSV de prueba como datos definitivos.
