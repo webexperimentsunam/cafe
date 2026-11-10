@@ -155766,12 +155766,15 @@ window.ExpBuilderNavigation?.registerTrial(1794334990210, experiment_timeline);
     ];
     const cafeStimuliPrincipales = window.CAFE_MODO_PRUEBA === true
       ? CAFE_IMAGENES_PRUEBA.map(ruta => {
+          // La v4 mueve la imagen visual al SurveyJS para evitar solapamientos.
+          // Buscar por la ruta original guardada antes de quitar el ImageComponent.
+          // Soportar también el componente original si se desactiva el rediseño.
           const stimulo = test_stimuli_loop_1794335806908.find(
-            item => item.components_experiment?.some(
+            item => item.cafe_stimulus === ruta || item.components_experiment?.some(
               componente => componente.type === "ImageComponent" && componente.stimulus === ruta
             )
           );
-          if (!stimulo) throw new Error("Falta el estimulo de prueba: " + ruta);
+          if (!stimulo) throw new Error("No se encontro la definicion del estimulo de prueba: " + ruta);
           return stimulo;
         })
       : test_stimuli_loop_1794335806908;
