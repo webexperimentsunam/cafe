@@ -1,0 +1,73 @@
+/* CAFE v4: escalado y ajustes de presentacion.
+   La foto se inserta en SurveyJS sin crear otro ensayo ni otra variable de respuesta. */
+:root { color-scheme:light; }
+html,body { width:100%; max-width:100%; min-height:100%; overflow-x:hidden; }
+.jspsych-display-element:not(body), .jspsych-content-wrapper { max-width:100vw; }
+body.cafe-ensayo {
+  margin:0;
+  overflow-x:hidden;
+  background:#fff;
+}
+body.cafe-ensayo .jspsych-content-wrapper,
+body.cafe-ensayo .jspsych-content {
+  width:100%; max-width:100vw; box-sizing:border-box;
+}
+/* SurveyJS: la foto es un bloque de solo lectura dentro del mismo cuestionario. */
+.cafe-foto-ensayo {
+  box-sizing:border-box;
+  display:flex; align-items:center; justify-content:center;
+  width:100%; min-width:0; max-width:100%;
+  margin:0 auto clamp(10px,2vw,22px);
+}
+.cafe-foto-ensayo img {
+  display:block;
+  width:clamp(160px,26vw,245px);
+  height:auto; max-height:260px; max-width:85%;
+  object-fit:contain;
+}
+body.cafe-ensayo .sd-root-modern,
+body.cafe-ensayo .sd-root-default {
+  box-sizing:border-box;
+  max-width:min(94vw,880px) !important;
+  width:min(94vw,880px) !important;
+  margin-inline:auto;
+}
+body.cafe-ensayo .sd-container-modern,
+body.cafe-ensayo .sd-body,
+body.cafe-ensayo .sd-body__page,
+body.cafe-ensayo .sd-page {
+  max-width:100%; min-width:0; box-sizing:border-box;
+}
+body.cafe-ensayo .sd-title,
+body.cafe-ensayo .sd-header__text h3,
+body.cafe-ensayo .sd-header__text {
+  overflow-wrap:break-word;
+}
+body.cafe-ensayo .sd-rating {max-width:100%;}
+body.cafe-ensayo .sd-question {min-width:0;max-width:100%;}
+@media (max-width:600px){
+ body.cafe-ensayo .sd-root-modern,
+ body.cafe-ensayo .sd-root-default {max-width:100vw !important;width:100vw !important;}
+ .cafe-foto-ensayo{margin:0 auto 10px;}
+ .cafe-foto-ensayo img{width:clamp(150px,48vw,210px);max-height:235px;}
+ body.cafe-ensayo .sd-body {padding-inline:clamp(8px,3vw,18px);}
+ body.cafe-ensayo .sd-question {max-width:100%;}
+}
+@media (max-width:360px){
+ .cafe-foto-ensayo img{width:clamp(145px,46vw,180px);}
+}
+
+/* Otros formularios: permitir que SurveyJS aproveche la anchura disponible
+   sin cambiar sus opciones ni sus validaciones. */
+@media (max-width:700px) {
+  body .sd-root-modern, body .sd-root-default {
+    max-width:100vw !important; width:100vw !important; box-sizing:border-box;
+  }
+  /* El consentimiento original incluye fuentes inline de 35px. */
+  #is4j p, #is4j li {
+    font-size:clamp(16px,4vw,21px) !important;
+    line-height:1.42 !important;
+    overflow-wrap:anywhere;
+  }
+  #iv5s strong {font-size:clamp(20px,5.1vw,28px) !important;line-height:1.3 !important;}
+}

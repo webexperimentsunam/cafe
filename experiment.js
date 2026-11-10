@@ -1553,7 +1553,16 @@ const m9e = decideBranch;
           comp => comp?.type === 'ImageComponent' && typeof comp.stimulus === 'string'
             && /\.(jpg|jpeg|png|webp)$/i.test(comp.stimulus)
         );
-        if (cafeImage && trial?.data) trial.data.cafe_imagen = cafeImage.stimulus;
+        // CAFE responsive: la imagen se presenta dentro de SurveyJS (HTML visual,
+        // sin campo de respuesta). Conservar la ruta original en el registro.
+        let cafeOriginalImage = cafeImage?.stimulus || null;
+        if (!cafeOriginalImage && ['practice', 'experiment'].includes(trial?.data?.trial_name)
+            && typeof jsPsych.evaluateTimelineVariable === 'function') {
+          try { cafeOriginalImage = jsPsych.evaluateTimelineVariable('cafe_stimulus'); } catch (_error) {}
+        }
+        if (cafeOriginalImage && trial?.data) trial.data.cafe_imagen = cafeOriginalImage;
+        // Clase solo en ensayos de caras; otras pantallas no se redisenan.
+        window.CAFEResponsive?.setTrialMode?.(trial?.data?.trial_name);
         window.ExpBuilderNavigation.checkpointTrialStart(trial?.data ?? {});
         const lastTrialData = jsPsych.data.get()
         if (lastTrialData && trial.data) {
@@ -2761,6 +2770,9 @@ window.ExpBuilderNavigation?.registerTrial(1794332910990, Instructions_procedure
     ]
   }
 ];
+    // CAFE v4: la foto y las preguntas comparten un contenedor responsive.
+    window.CAFEResponsive?.prepareStimuli?.(test_stimuli_loop_1794333487158, 'practice');
+
     
     
     const practice_timeline = {
@@ -2772,6 +2784,7 @@ data: {
     trial_id: 1794333477733,
     builder_id: 1794333477733,
     trial_name: "practice",
+    cafe_imagen: jsPsych.timelineVariable("cafe_stimulus"),
     isInLoop: true,
     branches: [1794334785465],
     branchConditions: [],
@@ -155616,6 +155629,9 @@ window.ExpBuilderNavigation?.registerTrial(1794334785465, preparation_procedure)
     ]
   }
 ];
+    // CAFE v4: la foto y las preguntas comparten un contenedor responsive.
+    window.CAFEResponsive?.prepareStimuli?.(test_stimuli_loop_1794335806908, 'experiment');
+
     
     
     const experiment_timeline = {
@@ -155627,6 +155643,7 @@ data: {
     trial_id: 1794334990210,
     builder_id: 1794334990210,
     trial_name: "experiment",
+    cafe_imagen: jsPsych.timelineVariable("cafe_stimulus"),
     isInLoop: true,
     branches: [1794335934986],
     branchConditions: [],
