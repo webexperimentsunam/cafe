@@ -1,39 +1,52 @@
-# CAFE v9 — Restaurar pantallas visibles y evitar duplicaciones
+# CAFE v10 — Escalado integral mediante plugins jsPsych nativos
 
-Este parche corrige la regresión de v8 en la que la primera pantalla quedaba vacía. No cambia la definición del experimento ni el sistema de guardado.
+**Cambio de enfoque:** igual que en Juicios Morales, las pantallas de CAFE se construyen una sola vez mediante plugins nativos de jsPsych, usando las definiciones originales de ExpBuilder. Ya no se intentan mover o copiar elementos que ExpBuilder ha colocado con coordenadas fijas en el DOM.
 
-## Qué se corrigió
+## Archivos que se actualizan en GitHub
 
-- **Información (Bienvenida, Consentimiento, no_consent, Instructions, preparation y Ending).** Se eliminan las reglas generales de v8 que forzaban `position: static` y `height: auto` sobre todos los elementos internos del lienzo ExpBuilder. Esas reglas dañaban el renderizado original y podían dejar el contenedor vacío.
-- Se compone una presentación adaptable del texto y las imágenes desde las definiciones de los componentes de ExpBuilder, **pero se mueven los botones originales** del plugin al pie del panel. No se crean botones sustitutos ni se activan clics programáticos sobre los controles ocultos.
-- El renderer de origen solo se oculta cuando se encontraron y trasladaron todos los botones nativos; hasta entonces sigue visible el original. Si no se encuentran tras cinco segundos, se quita el panel y queda el renderer original (modo de respaldo, no responsive).
-- Los ensayos de evaluación siguen utilizando el **ImageComponent y SurveyComponent originales** y conservan las cinco preguntas en un único ensayo, con cara visible y los siete valores Likert en una fila.
-- Se retiró el CSS de v8 que ocultaba incondicionalmente el renderer original de los ensayos antes de verificar que el SurveyJS y la imagen estuviesen montados.
-- No se vuelve a añadir «Rostro a evaluar».
+1. `index.html` — carga los dos módulos v10 y conserva el interruptor de prueba de tres imágenes.
+2. `experiment.js` — **única línea nueva** antes de `ExpBuilderNavigation.attach(jsPsych, timeline)` para instalar el renderizador nativo. No se modificaron los estímulos, saltos, orden, backend, Firebase, IndexedDB ni la lógica de recuperación.
+3. `cafe-nativo.js` — renderizador único para nueve tipos de ensayo, con formularios HTML nativos generados a partir del JSON de SurveyJS.
+4. `cafe-nativo.css` — estilos adaptables para toda la tarea.
 
-## Instalación
+Se pueden dejar `cafe-escalado.js` y `cafe-escalado.css` en el repositorio: esta versión ya **no los carga**. No es necesario volver a subir las imágenes.
 
-Desde la versión v8, sustituir solo en la raíz del repositorio GitHub:
+## Estructura de las pantallas
 
-- `index.html`
-- `cafe-escalado.js`
-- `cafe-escalado.css`
+- Bienvenida, consentimiento, instrucciones, transición y final: tarjetas con dimensiones fluidas, texto legible, desplazamiento vertical y botones originales en contenido y respuesta (mismas etiquetas y variables del JSON de ExpBuilder).
+- Sociodemográficos: 14 preguntas de la exportación, usando sus mismos tipos (texto, selección simple y desplegable) y opciones.
+- Práctica y tarea principal: **un ensayo = una imagen original + las cinco preguntas originales**. No se crea ninguna segunda imagen, no se trasladan ni clonan nodos de ExpBuilder.
+- Las cuatro escalas de siete valores aparecen en **una sola fila horizontal**, sin saltos de línea. Se exige contestar todas las preguntas obligatorias para avanzar.
+- En escritorio, fotografía a la izquierda con posición `sticky` y cuestionario compacto a la derecha. En móvil, fotografía arriba con `sticky` y preguntas debajo. Se eliminó la leyenda “Rostro a evaluar”.
+- Se conserva `cafe_imagen`, `ImageComponent_1_stimulus`, `SurveyComponent_1_response`, `SurveyComponent_1_type` y nombres de preguntas como `question1`…`question5`.
+- El diseño se reconstruye una sola vez por ensayo y no crea pantallas adicionales ni botones repetidos.
 
-El archivo HTML apunta a `cafe-escalado.js?v=9` y `cafe-escalado.css?v=9` para evitar usar la versión anterior de la caché. No modificar `experiment.js` (continúa con la referencia `?v=7`), las fotos ni los archivos de estímulos. El modo de tres ítems sigue controlado desde `window.CAFE_MODO_PRUEBA = true` en `index.html`.
+## Configuración de pruebas
 
-## Verificación local
+En `index.html`:
 
-- `node --check` confirma sintaxis válida.
-- Prueba lógica con DOM simulado: bienvenida con botón original; transición a consentimiento y a instrucciones sin otra pantalla visible; un solo ImageComponent y el SurveyJS original con cinco preguntas; restauración al cambiar de ensayo.
-- No se pudo realizar prueba visual con el plugin real: el navegador del entorno bloquea incluso las páginas locales (`ERR_BLOCKED_BY_ADMINISTRATOR`). Es imprescindible revisar la versión publicada en GitHub Pages en computadora y celular.
-- `experiment.js`, imágenes y contenidos del ensayo son **binariamente idénticos** a la v8.
+```js
+window.CAFE_MODO_PRUEBA = true; // Tres imágenes principales + tres de práctica
+// false para el experimento completo con los 1,192 estímulos principales.
+```
 
-## Comprobación al publicar
+## Alcance de la verificación
 
-1. Abrir el experimento y confirmar que se ve la bienvenida con el botón «Comenzar».
-2. Revisar el consentimiento y las instrucciones, en computadora y en una simulación móvil de 320-390 px, verificando que no aparezcan dos versiones de cada pantalla y que los botones funcionen.
-3. Revisar una práctica: cara visible y las cinco preguntas, sin imagen duplicada ni recarga de la pantalla previa.
-4. Comprobar `window.CAFELayoutDiagnostics` en consola: debe aparecer `version: '9.0'`; en informativas `infoReady: true`, y en una evaluación `surveyFound: true`, `originalImageFound: true` y `originalQuestions: 5`.
-5. Comprobar **por separado** el envío a Google Drive. Los HTTP 401 y 500 previos de `apiData` no se corrigen con un parche visual.
+- `node --check` para ambos archivos JavaScript: correcto.
+- Pruebas con DOM simulado sobre los **nueve tipos** de pantalla: campos de consentimiento, 14 preguntas demográficas, cuatro escalas de siete opciones, quinto reactivo de emoción, identificación de imagen y esquema de respuestas.
+- Comparación byte a byte: todas las imágenes del ZIP v9 son idénticas.
+- Comparación de `experiment.js` respecto de v9: **se añadió una sola línea** para instalar el plugin, sin modificar la lógica de guardado, reanudación ni las 1,192 filas del experimento.
+- Limitación: en esta sesión el navegador automatizado bloqueó las páginas locales. Estas son verificaciones de código/DOM simulado, **no** una prueba visual de ejecución con el plugin real de GitHub Pages.
 
-No limpiar IndexedDB al actualizar la interfaz: pueden existir respuestas locales pendientes de sincronización.
+## Comprobaciones al publicar
+
+1. Recargar con Ctrl+Shift+R; confirmar que `window.CAFENativeDiagnostics.version` sea `"10.0"`.
+2. Comprobar bienvenida, consentimiento e instrucciones en ancho de 320 px; solo una pantalla y controles legibles.
+3. Completar demográficos; comprobar que ninguna pregunta se recorte.
+4. En práctica, verificar **una** foto con **cinco** preguntas, las cuatro filas de 1 a 7, una única foto visible mientras se desplaza el cuestionario. Repetir en escritorio.
+5. Contestar las 3 imágenes principales del modo prueba; comprobar que `cafe_imagen` corresponda a la foto presentada, sin ensayos duplicados.
+6. Revisar consola: `window.CAFENativeDiagnostics` y `window.CAFEBatchDiagnostics`.
+
+**Advertencia de guardado:** el servidor `apiData` devolvía HTTP 401/500 en versiones anteriores. La v10 **no altera ni resuelve** la API. No considerar confirmado el guardado remoto ni utilizar con participantes mientras la API siga fallando; IndexedDB local no equivale a Google Drive.
+
+**Observación preexistente:** la definición demográfica exportada tiene dos preguntas distintas llamadas `question8`. La v10 mantiene la definición y las presenta, pero como ambas comparten clave, las exportaciones pueden contener una única respuesta `question8`. Conviene revisar por separado antes del estudio definitivo.

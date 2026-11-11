@@ -1,0 +1,159 @@
+/* CAFE v10 — mismos principios de Juicios Morales: un plugin jsPsych,
+   tarjetas fluidas, controles nativos y ninguna coordenada absoluta. */
+html,body {margin:0;max-width:100%;overflow-x:hidden;}
+#cafe-native-root, #cafe-native-root * {box-sizing:border-box;}
+#cafe-native-root {
+  position:fixed;inset:0;z-index:9999;display:flex;justify-content:center;
+  min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;
+  padding:clamp(10px,2vw,24px);background:#edf3f5;
+  font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  font-size:15px;line-height:1.55;color:#20343f;
+  text-align:left;
+}
+#cafe-native-root .cafe-native-card {
+  display:flex;flex-direction:column;min-width:0;width:min(100%,920px);
+  max-height:100%;min-height:0;margin:auto;
+  border:1px solid #d9e4e9;border-radius:13px;background:#fff;
+  box-shadow:0 6px 25px rgba(20,57,77,.07);overflow:hidden;
+}
+#cafe-native-root .cafe-native-header {
+  min-height:40px;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:10px clamp(15px,3vw,28px);border-bottom:1px solid #e4eaed;
+  font-size:11px;letter-spacing:.03em;color:#507080;
+}
+#cafe-native-root .cafe-native-content,
+#cafe-native-root .cafe-native-survey-scroll {
+  flex:1;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;
+  padding:clamp(16px,3vw,36px) clamp(15px,4vw,50px);
+}
+#cafe-native-root .cafe-native-content * {max-width:100%;overflow-wrap:break-word;}
+#cafe-native-root .cafe-native-content p,#cafe-native-root .cafe-native-content li {
+  font-size:clamp(15px,1.5vw,17px)!important;line-height:1.62!important;
+  text-align:left!important;letter-spacing:normal!important;white-space:normal!important;
+  margin:.55em 0 1.05em!important;word-spacing:normal!important;
+}
+#cafe-native-root .cafe-native-content strong {font-weight:700!important;font-size:inherit!important;}
+#cafe-native-root .cafe-native-content h1,
+#cafe-native-root .cafe-native-content h2 {
+  font-size:clamp(21px,3vw,31px)!important;line-height:1.25!important;
+  margin:.4em 0 .8em!important;text-align:center!important;
+}
+#cafe-native-root .cafe-native-content ul {padding-left:1.5em;margin:12px 0 20px;}
+#cafe-native-root .cafe-native-welcome-head {white-space:normal;}
+#cafe-native-root .cafe-native-logos {
+  display:block;width:min(100%,340px);max-height:124px;height:auto;object-fit:contain;
+  margin:0 auto clamp(20px,4vw,36px);
+}
+#cafe-native-root .cafe-native-content-bienvenida {text-align:center;}
+#cafe-native-root .cafe-native-content-bienvenida .cafe-native-text p,
+#cafe-native-root .cafe-native-content-bienvenida .cafe-native-text h1,
+#cafe-native-root .cafe-native-content-bienvenida .cafe-native-text h2 {
+  text-align:center!important;
+}
+#cafe-native-root .cafe-native-footer {
+  display:flex;justify-content:center;gap:12px;flex-wrap:wrap;
+  padding:13px clamp(13px,3vw,22px);border-top:1px solid #e0e9ec;
+  background:#fff;flex:none;
+}
+#cafe-native-root .cafe-native-button {
+  min-width:130px;min-height:44px;padding:10px 22px;border:1px solid #286476;
+  border-radius:8px;background:#286476;color:#fff;font-size:15px;
+  font-family:inherit;font-weight:600;cursor:pointer;
+}
+#cafe-native-root .cafe-native-button:hover {background:#17485a;}
+#cafe-native-root .cafe-native-button.cafe-native-secondary {color:#315767;background:white;border-color:#9fb5c0;}
+#cafe-native-root button:focus-visible,#cafe-native-root input:focus-visible,#cafe-native-root select:focus-visible {
+  outline:2px solid #287d98;outline-offset:2px;
+}
+#cafe-native-root button:disabled {opacity:.5;cursor:wait;}
+/* La foto nunca se copia ni usa absolute: comparte grid con su encuesta. */
+#cafe-native-root .cafe-native-evaluation {
+  display:grid;grid-template-columns:minmax(190px,280px) minmax(0,650px);
+  justify-content:center;gap:clamp(12px,2vw,24px);align-items:start;
+  min-width:0;width:min(100%,1050px);margin:auto;
+}
+#cafe-native-root .cafe-native-face-panel {
+  position:sticky;top:clamp(8px,2vw,22px);min-width:0;
+  padding:clamp(7px,1vw,14px);background:#fff;
+  border:1px solid #dbe5e9;border-radius:12px;
+  box-shadow:0 4px 14px rgba(20,57,77,.055);
+}
+#cafe-native-root .cafe-native-face {
+  display:block;width:100%;height:auto;max-height:min(65dvh,440px);
+  object-fit:contain;border-radius:6px;
+}
+#cafe-native-root .cafe-native-survey-card {
+  min-width:0;max-width:100%;border:1px solid #dbe5e9;border-radius:12px;
+  background:white;box-shadow:0 4px 14px rgba(20,57,77,.055);
+  overflow:hidden;
+}
+#cafe-native-root .cafe-native-form {display:flex;flex-direction:column;min-width:0;}
+#cafe-native-root .cafe-native-survey-scroll {overflow:visible;padding:clamp(12px,2.2vw,26px);}
+#cafe-native-root .cafe-native-survey-title {
+  font-size:clamp(18px,2.3vw,23px);font-weight:700;line-height:1.35;
+  margin:0 0 18px;color:#1f3946;
+}
+#cafe-native-root .cafe-native-question {
+  min-width:0;max-width:100%;padding:clamp(11px,2vw,18px);margin:0 0 12px;
+  border:1px solid #e0e7eb;border-radius:9px;background:#f9fbfc;
+}
+#cafe-native-root .cafe-native-label {
+  display:block;float:none;width:100%;padding:0;margin:0 0 13px;
+  font-size:clamp(13px,1.5vw,15px);line-height:1.5;font-weight:650;
+  overflow-wrap:break-word;color:#263e49;
+}
+#cafe-native-root .cafe-native-required {color:#b5484f;}
+#cafe-native-root .cafe-native-scale-ends {
+  display:flex;justify-content:space-between;gap:12px;
+  margin-bottom:8px;color:#5c7784;font-size:clamp(10px,1.2vw,13px);
+}
+#cafe-native-root .cafe-native-scale-ends span:last-child {text-align:right;}
+#cafe-native-root .cafe-native-scale {
+  display:grid;grid-template-columns:repeat(var(--cafe-options,7),minmax(0,1fr));
+  gap:clamp(2px,.7vw,7px);min-width:0;max-width:100%;
+}
+#cafe-native-root .cafe-native-value {display:block;min-width:0;position:relative;cursor:pointer;}
+#cafe-native-root .cafe-native-value input {
+  position:absolute;width:100%;height:100%;opacity:0;cursor:pointer;inset:0;
+}
+#cafe-native-root .cafe-native-value span {
+  display:flex;justify-content:center;align-items:center;
+  min-height:clamp(32px,4vw,41px);border-radius:6px;
+  border:1px solid #cbdce4;background:#fff;color:#245063;
+  font-size:clamp(12px,1.5vw,15px);font-weight:600;
+}
+#cafe-native-root .cafe-native-value input:checked+span {color:white;background:#245e70;border-color:#245e70;}
+#cafe-native-root .cafe-native-value input:focus-visible+span {outline:2px solid #287d98;outline-offset:1px;}
+#cafe-native-root .cafe-native-options {display:grid;gap:6px;}
+#cafe-native-root .cafe-native-radio {display:flex;gap:10px;align-items:center;padding:5px 0;cursor:pointer;}
+#cafe-native-root .cafe-native-radio input {flex:none;width:17px;height:17px;accent-color:#286476;}
+#cafe-native-root .cafe-native-input,#cafe-native-root .cafe-native-select {
+  width:100%;max-width:100%;min-height:42px;border:1px solid #bcced7;
+  border-radius:7px;padding:9px 12px;background:white;color:#20343f;
+  font-size:16px;font-family:inherit;
+}
+#cafe-native-root .cafe-native-error {color:#9f2d3c;font-weight:600;}
+#cafe-native-root .cafe-native-missing {border-color:#c35c66;background:#fffafa;}
+@media(max-width:640px){
+  #cafe-native-root {padding:8px;}
+  #cafe-native-root .cafe-native-card {border-radius:9px;}
+  #cafe-native-root .cafe-native-header {padding:8px 13px;font-size:10px;}
+  #cafe-native-root .cafe-native-content {padding:15px 15px 22px;}
+  #cafe-native-root .cafe-native-content p,#cafe-native-root .cafe-native-content li {font-size:15px!important;}
+  #cafe-native-root .cafe-native-evaluation {grid-template-columns:minmax(0,1fr);gap:8px;align-content:start;}
+  #cafe-native-root .cafe-native-face-panel {
+    top:0;z-index:3;padding:5px;border-radius:9px;
+    display:flex;justify-content:center;
+  }
+  #cafe-native-root .cafe-native-face {width:auto;max-width:100%;max-height:clamp(145px,24dvh,210px);}
+  #cafe-native-root .cafe-native-survey-scroll {padding:12px;}
+  #cafe-native-root .cafe-native-question {padding:10px;margin-bottom:10px;}
+  #cafe-native-root .cafe-native-value span {min-height:35px;}
+  #cafe-native-root .cafe-native-survey-title {font-size:18px;}
+  #cafe-native-root .cafe-native-button {min-width:116px;}
+}
+@media(max-width:350px){
+  #cafe-native-root .cafe-native-scale {gap:3px;}
+  #cafe-native-root .cafe-native-scale-ends {font-size:10px;}
+  #cafe-native-root .cafe-native-value span {min-height:31px;font-size:12px;}
+}

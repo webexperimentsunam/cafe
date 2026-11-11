@@ -155979,6 +155979,7 @@ data: {
   
 window.ExpBuilderNavigation?.registerTrial(1794335934986, Ending_procedure);
 
+    window.CAFENative.install(timeline); // CAFE v10: un único renderer responsive por ensayo.
     window.ExpBuilderNavigation?.attach(jsPsych, timeline);
     jsPsych.run(timeline);
 
