@@ -184,3 +184,83 @@ body .jspsych-content-wrapper.cafe-native-hidden {
   #cafe-evaluation-shell {grid-template-rows:125px minmax(0,1fr);}
   #cafe-evaluation-shell .cafe-face-image {max-height:105px;}
 }
+
+
+/* === CAFE v8: renderer ÚNICO, sin segundas imágenes ni pantallas === */
+/* Las pantallas informativas se reordenan in situ; los botones son nativos. */
+body.cafe-informacion{overflow-x:hidden!important;overflow-y:auto!important;background:#eef3f5!important;}
+body.cafe-informacion .jspsych-content-wrapper,
+body.cafe-informacion .jspsych-content{
+  position:relative!important;top:auto!important;left:auto!important;
+  right:auto!important;bottom:auto!important;transform:none!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  margin:0 auto!important;overflow:visible!important;
+}
+body.cafe-informacion .jspsych-content-wrapper{
+  display:flex!important;justify-content:center!important;align-items:flex-start!important;
+  padding:clamp(12px,3vw,28px)!important;box-sizing:border-box!important;
+}
+body.cafe-informacion .jspsych-content{
+  background:#fff!important;border:1px solid #dce6ec!important;border-radius:12px!important;
+  padding:clamp(16px,3vw,34px)!important;box-shadow:0 5px 25px rgba(20,48,65,.08)!important;
+  max-width:880px!important;
+}
+body.cafe-informacion .jspsych-content *:not(button):not(input):not(svg):not(path):not(circle){
+  position:static!important;inset:auto!important;top:auto!important;left:auto!important;
+  right:auto!important;bottom:auto!important;transform:none!important;
+  max-width:100%!important;min-width:0!important;box-sizing:border-box!important;
+}
+body.cafe-informacion .jspsych-content div:not(.sd-root-modern):not(.sd-root-default){
+  height:auto!important;max-height:none!important;
+}
+body.cafe-informacion .jspsych-content h1,
+body.cafe-informacion .jspsych-content h2{font-family:system-ui,Arial,sans-serif!important;
+  font-size:clamp(21px,4.2vw,31px)!important;line-height:1.28!important;overflow-wrap:break-word!important;
+  margin:0 0 .75em!important;}
+body.cafe-informacion .jspsych-content p,
+body.cafe-informacion .jspsych-content li,
+body.cafe-informacion .jspsych-content span:not(.sd-rating__item-text),
+body.cafe-informacion .jspsych-content strong{
+  font-family:system-ui,Arial,sans-serif!important;
+  font-size:clamp(14px,2.3vw,17px)!important;line-height:1.48!important;
+  letter-spacing:normal!important;overflow-wrap:break-word!important;
+}
+body.cafe-informacion .jspsych-content img{max-width:100%!important;height:auto!important;object-fit:contain!important;}
+body.cafe-informacion .jspsych-content button,
+body.cafe-informacion .jspsych-content input[type=button],
+body.cafe-informacion .jspsych-content input[type=submit]{
+  position:relative!important;inset:auto!important;transform:none!important;
+  min-height:42px!important;margin:8px!important;padding:9px 15px!important;
+  font:600 14px/1.2 system-ui,Arial,sans-serif!important;max-width:100%!important;
+}
+@media(max-width:750px){
+  body.cafe-informacion .jspsych-content-wrapper{padding:0!important;}
+  body.cafe-informacion .jspsych-content{border:0!important;border-radius:0!important;
+    padding:18px 14px!important;}
+}
+/* El original es el ÚNICO img presente en el portal, reubicado con su nodo DOM. */
+#cafe-evaluation-shell .cafe-native-image-slot{
+  width:100%;min-height:0;display:flex;align-items:center;justify-content:center;
+}
+#cafe-evaluation-shell .cafe-moved-image{
+  position:static!important;inset:auto!important;top:auto!important;left:auto!important;
+  right:auto!important;bottom:auto!important;transform:none!important;
+  display:block!important;width:auto!important;max-width:100%!important;
+  height:auto!important;max-height:min(65dvh,430px)!important;object-fit:contain!important;
+  margin:0!important;border-radius:7px!important;
+}
+#cafe-evaluation-shell:not(.cafe-ready){visibility:hidden!important;}
+@media(max-width:750px){
+  #cafe-evaluation-shell .cafe-native-image-slot{height:100%;}
+  #cafe-evaluation-shell .cafe-moved-image{
+    max-height:calc(clamp(150px,27dvh,220px) - 12px)!important;
+  }
+}
+
+/* Suprimir el parpadeo del renderer absoluto mientras se traslada el único
+   contenido nativo al layout; si falla la integración, se restaura a 6 s. */
+body.cafe-ensayo .jspsych-content-wrapper,
+body.cafe-formulario .jspsych-content-wrapper{
+  visibility:hidden!important;pointer-events:none!important;
+}

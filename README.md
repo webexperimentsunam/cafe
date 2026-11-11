@@ -1,34 +1,42 @@
-# CAFE v7 — Escalado integral y Likert de una fila
+# CAFE v8 — Corrección de pantallas duplicadas
 
-## Qué corrige
-- **Todas las pantallas del experimento**, no solo las escalas: bienvenida, consentimiento, datos sociodemográficos, instrucciones, práctica, transición, evaluación principal y despedida.
-- Las pantallas informativas conservan el contenido literal de ExpBuilder, pero lo presentan en un contenedor adaptable, sin coordenadas absolutas y sin los tamaños inline de 35–50 px que desbordaban el celular. Sus botones visuales invocan los **botones nativos** de ExpBuilder: no se modifican las decisiones ni los datos.
-- Demográficos, práctica y evaluación principal reubican el **SurveyJS original** con sus validaciones y manejadores; no se crea ni se modifica ninguna pregunta.
-- En computadora, fotografía fija a la izquierda y cuestionario a la derecha. En teléfono, fotografía fija arriba y preguntas debajo con desplazamiento independiente.
-- Cada escala Likert con 7 valores se presenta en **una única fila horizontal**; los textos de anclaje quedan encima de los valores.
-- Se eliminó «Rostro a evaluar». La fotografía mantiene su proporción sin recortarse.
-- En pantallas informativas, los botones quedan en un pie estable, separado del texto desplazable.
+## Motivo de esta versión
 
-## Qué permanece idéntico
-- La exportación de ExpBuilder conserva sus 1192 estímulos principales, las tres prácticas, las cinco preguntas por rostro, las respuestas originales, validaciones, aleatorización, condiciones y tiempos.
-- Interruptor `window.CAFE_MODO_PRUEBA = true` en `index.html` (3 rostros principales más las tres prácticas).
-- El guardado, la recuperación, IndexedDB, Firebase, la API, `batchSize = 1`, y el campo `cafe_imagen` no se han modificado.
-- La única modificación de `experiment.js` es pasar el objeto de ensayo a la función visual y, en caso necesario, consultar los componentes de la fila del timeline. La preparación y almacenamiento de datos son idénticos.
+En v7, las pantallas informativas se copiaban en un panel creado aparte y sus botones hacían clic en botones originales, mientras que en las evaluaciones se creaba una nueva imagen y se reubicaba el SurveyJS original. Dependiendo del momento en que ExpBuilder volvía a pintar el DOM, se podían mostrar **dos versiones de la misma pantalla** o **dos fotografías**.
 
-## Instalación en GitHub
-1. Hacer copia de seguridad de los archivos de CAFE v6.
-2. Sustituir **solo** `index.html`, `experiment.js`, `cafe-escalado.js` y `cafe-escalado.css` en la raíz del repositorio `webexperimentsunam/cafe`.
-3. No reemplazar las imágenes ni los demás recursos. Las rutas son las mismas.
-4. Esperar despliegue verde de GitHub Pages y recargar con `Ctrl+Shift+R` (no borrar IndexedDB ni datos del sitio).
-5. En consola, `window.CAFELayoutDiagnostics` debe mostrar `version: "7.0"`; en consentimiento `infoReady: true`, en evaluación `surveyFound: true`, `surveyVisible: true` y `originalQuestions: 5`.
+## Cambios de v8
 
-## Pruebas locales completadas
-- `node --check` de JavaScript.
-- VM del experimento: 3 estímulos originales con 5 preguntas, `batchSize=1`, IndexedDB, `useIndexedDB=false` para Firebase, recuperación, nueva sesión, envío y finalización con fallos simulados.
-- 42 pruebas de Chromium de la interfaz (**6 tamaños: 320, 375, 390, 768, 1024, 1366 px** por **7 pantallas**): sin desbordamientos, botones nativos accionables, SurveyJS nativo conservado, Likert de una fila y fotografía visible durante scroll.
-- Las pruebas visuales simularon el DOM de ExpBuilder/SurveyJS porque el complemento real depende de scripts externos no accesibles en este entorno. Se requiere confirmar la integración real desde GitHub Pages antes de recolectar respuestas.
+1. **Bienvenida, consentimiento, instrucciones, transición y despedida:** ya no se clona el contenido ni se crean botones sustitutos. Solo se aplican reglas CSS al DOM original de ExpBuilder; los controles originales mantienen sus eventos.
+2. **Práctica y evaluación principal:** la interfaz móvil/escritorio usa el **`ImageComponent` original** y el **SurveyJS original**, moviendo sus nodos DOM al panel adaptable, y restaurándolos cuando inicia otro ensayo. No hay una segunda imagen añadida por la adaptación.
+3. **Transiciones:** se ignoran los elementos preexistentes del ensayo anterior para no volver a capturar una imagen antigua mientras ExpBuilder termina el cambio de pantalla.
+4. **Escala Likert:** se mantiene la regla de 7 respuestas en una sola fila, con fotografía visible durante la respuesta.
+5. **El HTML usa** `cafe-escalado.css?v=8` y `cafe-escalado.js?v=8`, para evitar archivos de escalado almacenados en caché. **No se cambia `experiment.js?v=7`**, ni ningún componente de guardado.
 
-## Problema de servidor independiente y pendiente
-- Las solicitudes `POST https://us-central1-test-e4cf9.cloudfunctions.net/apiData` devolvieron **HTTP 500** y se observó también HTTP 401. El presente parche **no modifica ni corrige** esa función del servidor. Aunque el navegador conserve la cola en IndexedDB, **no equivale a guardado confirmado en Drive**.
-- En modo normal (no incógnito), comprobar `window.CAFEBatchDiagnostics` y asegurar que `apiConfirmed` aumente y `pendingRemote` disminuya. Si se requiere, revisar logs de la Cloud Function `apiData` con el desarrollador antes de recolección.
-- No borrar los datos del sitio para hacer pruebas de recuperación: se perdería el progreso local.
+## Instalación
+
+Subir a la **raíz del repositorio de CAFE** y reemplazar solamente:
+
+- `index.html`
+- `cafe-escalado.js`
+- `cafe-escalado.css`
+
+**No reemplazar `experiment.js`, ni `img/`, ni ninguno de los JSON de estímulos.** La configuración de prueba continúa en `index.html` (`window.CAFE_MODO_PRUEBA = true`).
+
+## Qué se verificó localmente
+
+- Sintaxis JavaScript válida.
+- `experiment.js` binariamente idéntico a v7. Por consiguiente no se modifica la definición del experimento ni el guardado.
+- Prueba funcional con DOM simulado: en pantallas informativas no se crean copias; en la evaluación, el elemento `<img>` original y el SurveyJS con sus cinco preguntas se reubican y se restauran; se ignoran imágenes y encuestas de ensayos anteriores.
+
+**Límite:** no fue posible ejecutar el complemento remoto real de ExpBuilder/SurveyJS en este entorno, por lo que aún se necesita comprobar el resultado publicado en GitHub Pages, especialmente el escalado de los textos informativos y el flujo completo. En caso de problemas, restaurar la copia de seguridad previa.
+
+## Pasos para probar en GitHub Pages
+
+1. Publicar el parche, recargar con `Ctrl+Shift+R` y abrir una **sesión de prueba nueva**. Para comprobar recuperación usar una ventana normal: el modo incógnito elimina IndexedDB al terminar la sesión privada.
+2. Revisar bienvenida, consentimiento e instrucciones en computadora y celular. Debe aparecer **una sola pantalla** y funcionar un solo botón nativo por opción.
+3. En práctica, confirmar **una sola fotografía y un solo cuestionario de cinco preguntas**. Deben verse la foto y las siete opciones Likert en una fila, también en móvil.
+4. Pulsar «Completar» y confirmar que se presenta la **siguiente fotografía del ensayo siguiente**, no dos fotografías simultáneas ni una copia de la pantalla anterior.
+5. En consola, comprobar `window.CAFELayoutDiagnostics`: `version:'8.0'`, `originalScreensCopied:0`, `originalImagesDuplicated:0`, `surveyFound:true`, `originalImageFound:true`, `originalQuestions:5` cuando ya se cargó la evaluación. Si no se consiguen estos valores, remitir la captura de consola.
+6. Verificar de manera independiente el guardado en Drive. El error `POST /apiData` 500 y el 401 anterior **no quedan resueltos por este parche de presentación**.
+
+No eliminar ni limpiar IndexedDB para actualizar la interfaz: las pruebas de reanudación dependen de esos datos locales.
