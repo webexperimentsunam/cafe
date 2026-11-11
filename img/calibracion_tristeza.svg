@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Tristeza">
+  <rect width="256" height="256" rx="28" fill="#eaf4ff"/>
+  <circle cx="128" cy="128" r="92" fill="#ffd84d" stroke="#e2b62e" stroke-width="8"/>
+  <circle cx="95" cy="108" r="10" fill="#2d2d2d"/>
+  <circle cx="161" cy="108" r="10" fill="#2d2d2d"/>
+  <path d="M86 182c10-18 25-27 42-27s32 9 42 27" fill="none" stroke="#2d2d2d" stroke-width="10" stroke-linecap="round"/>
+  <path d="M80 87c10 3 21 3 31 0" fill="none" stroke="#2d2d2d" stroke-width="8" stroke-linecap="round"/>
+  <path d="M145 87c10 3 21 3 31 0" fill="none" stroke="#2d2d2d" stroke-width="8" stroke-linecap="round"/>
+  <path d="M175 126c10 10 10 24 0 34" fill="none" stroke="#5da9ff" stroke-width="8" stroke-linecap="round"/>
+</svg>

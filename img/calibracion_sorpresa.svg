@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Sorpresa">
+  <rect width="256" height="256" rx="28" fill="#eef8ff"/>
+  <circle cx="128" cy="128" r="92" fill="#ffd84d" stroke="#e2b62e" stroke-width="8"/>
+  <ellipse cx="96" cy="106" rx="12" ry="15" fill="#fff" stroke="#2d2d2d" stroke-width="5"/>
+  <ellipse cx="160" cy="106" rx="12" ry="15" fill="#fff" stroke="#2d2d2d" stroke-width="5"/>
+  <circle cx="96" cy="108" r="5" fill="#2d2d2d"/>
+  <circle cx="160" cy="108" r="5" fill="#2d2d2d"/>
+  <path d="M80 80c8-11 18-17 30-18" fill="none" stroke="#2d2d2d" stroke-width="8" stroke-linecap="round"/>
+  <path d="M176 80c-8-11-18-17-30-18" fill="none" stroke="#2d2d2d" stroke-width="8" stroke-linecap="round"/>
+  <ellipse cx="128" cy="168" rx="16" ry="21" fill="#fff" stroke="#2d2d2d" stroke-width="8"/>
+</svg>

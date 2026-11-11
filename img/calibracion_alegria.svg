@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Alegría">
+  <rect width="256" height="256" rx="28" fill="#fff7d6"/>
+  <circle cx="128" cy="128" r="92" fill="#ffd84d" stroke="#e2b62e" stroke-width="8"/>
+  <circle cx="95" cy="104" r="10" fill="#2d2d2d"/>
+  <circle cx="161" cy="104" r="10" fill="#2d2d2d"/>
+  <path d="M82 148c12 24 29 36 46 36s34-12 46-36" fill="none" stroke="#2d2d2d" stroke-width="10" stroke-linecap="round"/>
+  <path d="M80 82c8-10 18-15 30-16" fill="none" stroke="#2d2d2d" stroke-width="8" stroke-linecap="round"/>
+  <path d="M176 82c-8-10-18-15-30-16" fill="none" stroke="#2d2d2d" stroke-width="8" stroke-linecap="round"/>
+</svg>
