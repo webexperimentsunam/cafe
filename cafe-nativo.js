@@ -9,7 +9,7 @@
     'practice','preparation','experiment','Ending'
   ]);
   const FACE = new Set(['practice','experiment']);
-  const diag = {version:'11.0',strategy:'native-jspsych',installed:[],rendered:0,
+  const diag = {version:'11.1',strategy:'native-jspsych',installed:[],rendered:0,
     lastTrial:null,lastImage:null,lastQuestions:0,submitted:0,errors:[],
     practiceStimuli:0,experimentStimuli:0};
   win.CAFENativeDiagnostics = diag;
@@ -318,8 +318,23 @@
           const responseVar=isFace?'response_components_'+name:'response_components';
           const earlier=node.on_finish;
           class CafeNativeTrial {
+            // jsPsych 8 advierte si falta `data`; jsPsych 9 lo exige.
+            // Es solo el esquema de metadatos, NO modifica el objeto de respuestas
+            // que se entrega a finishTrial ni los nombres de las columnas.
             static info={name:'cafe-native-'+name.toLowerCase().replace(/_/g,'-'),
-              version:'11.0',parameters:{}};
+              version:'11.1',parameters:{},
+              data: isFace ? {
+                rt:{type:'INT'},
+                SurveyComponent_1_response:{type:'OBJECT'},
+                cafe_imagen:{type:'STRING'},
+                cafe_orden_emociones:{type:'STRING'}
+              } : name==='Demographics' ? {
+                rt:{type:'INT'},
+                SurveyComponent_1_response:{type:'OBJECT'}
+              } : {
+                rt:{type:'INT'},
+                response:{type:'STRING'}
+              }};
             constructor(jsPsych){this.jsPsych=jsPsych;}
             trial(display){
               const begin=performance.now();
