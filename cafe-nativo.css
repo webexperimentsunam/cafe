@@ -1,4 +1,4 @@
-/* CAFE v10 — mismos principios de Juicios Morales: un plugin jsPsych,
+/* CAFE v11 — mismos principios de Juicios Morales: un plugin jsPsych,
    tarjetas fluidas, controles nativos y ninguna coordenada absoluta. */
 html,body {margin:0;max-width:100%;overflow-x:hidden;}
 #cafe-native-root, #cafe-native-root * {box-sizing:border-box;}
@@ -156,4 +156,23 @@ html,body {margin:0;max-width:100%;overflow-x:hidden;}
   #cafe-native-root .cafe-native-scale {gap:3px;}
   #cafe-native-root .cafe-native-scale-ends {font-size:10px;}
   #cafe-native-root .cafe-native-value span {min-height:31px;font-size:12px;}
+}
+
+/* v11 — El cuestionario sociodemográfico desplaza SOLO sus preguntas;
+   el encabezado y Continuar permanecen visibles. */
+#cafe-native-root .cafe-native-card.cafe-native-demographics {
+  height:100%;max-height:100%;min-height:0;
+}
+#cafe-native-root .cafe-native-demographics .cafe-native-form {
+  flex:1;min-height:0;overflow:hidden;
+}
+#cafe-native-root .cafe-native-demographics .cafe-native-survey-scroll {
+  flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+  scrollbar-width:thin;scrollbar-color:#9eb8c4 #f2f7f9;
+}
+#cafe-native-root .cafe-native-demographics .cafe-native-footer {
+  flex-shrink:0;
+}
+#cafe-native-root input[type=date].cafe-native-input {
+  color-scheme:light;min-width:0;
 }

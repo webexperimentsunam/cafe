@@ -1,52 +1,53 @@
-# CAFE v10 — Escalado integral mediante plugins jsPsych nativos
+# CAFE v11 — Demográficos y contrabalanceo de emociones
 
-**Cambio de enfoque:** igual que en Juicios Morales, las pantallas de CAFE se construyen una sola vez mediante plugins nativos de jsPsych, usando las definiciones originales de ExpBuilder. Ya no se intentan mover o copiar elementos que ExpBuilder ha colocado con coordenadas fijas en el DOM.
+Base exacta: CAFE v10 (renderizador nativo de jsPsych). Esta versión no modifica `experiment.js`, imágenes, número de ensayos, prácticas, presentación de caras ni sistema Firebase/IndexedDB.
 
-## Archivos que se actualizan en GitHub
+## Instalación en GitHub Pages
 
-1. `index.html` — carga los dos módulos v10 y conserva el interruptor de prueba de tres imágenes.
-2. `experiment.js` — **única línea nueva** antes de `ExpBuilderNavigation.attach(jsPsych, timeline)` para instalar el renderizador nativo. No se modificaron los estímulos, saltos, orden, backend, Firebase, IndexedDB ni la lógica de recuperación.
-3. `cafe-nativo.js` — renderizador único para nueve tipos de ensayo, con formularios HTML nativos generados a partir del JSON de SurveyJS.
-4. `cafe-nativo.css` — estilos adaptables para toda la tarea.
+En el repositorio `webexperimentsunam/cafe`, reemplazar **SOLO**:
 
-Se pueden dejar `cafe-escalado.js` y `cafe-escalado.css` en el repositorio: esta versión ya **no los carga**. No es necesario volver a subir las imágenes.
+- `index.html`
+- `cafe-nativo.js`
+- `cafe-nativo.css`
 
-## Estructura de las pantallas
+**NO reemplazar `experiment.js`**, ni las imágenes. `index.html` carga ahora `cafe-nativo.js?v=11` y `cafe-nativo.css?v=11`; sigue cargando exactamente el mismo `experiment.js?v=10` (no modificado).
 
-- Bienvenida, consentimiento, instrucciones, transición y final: tarjetas con dimensiones fluidas, texto legible, desplazamiento vertical y botones originales en contenido y respuesta (mismas etiquetas y variables del JSON de ExpBuilder).
-- Sociodemográficos: 14 preguntas de la exportación, usando sus mismos tipos (texto, selección simple y desplegable) y opciones.
-- Práctica y tarea principal: **un ensayo = una imagen original + las cinco preguntas originales**. No se crea ninguna segunda imagen, no se trasladan ni clonan nodos de ExpBuilder.
-- Las cuatro escalas de siete valores aparecen en **una sola fila horizontal**, sin saltos de línea. Se exige contestar todas las preguntas obligatorias para avanzar.
-- En escritorio, fotografía a la izquierda con posición `sticky` y cuestionario compacto a la derecha. En móvil, fotografía arriba con `sticky` y preguntas debajo. Se eliminó la leyenda “Rostro a evaluar”.
-- Se conserva `cafe_imagen`, `ImageComponent_1_stimulus`, `SurveyComponent_1_response`, `SurveyComponent_1_type` y nombres de preguntas como `question1`…`question5`.
-- El diseño se reconstruye una sola vez por ensayo y no crea pantallas adicionales ni botones repetidos.
-
-## Configuración de pruebas
-
-En `index.html`:
+El interruptor sigue ubicado en `index.html`:
 
 ```js
-window.CAFE_MODO_PRUEBA = true; // Tres imágenes principales + tres de práctica
-// false para el experimento completo con los 1,192 estímulos principales.
+window.CAFE_MODO_PRUEBA = true;  // tres ensayos principales + tres de práctica
 ```
 
-## Alcance de la verificación
+## Cambios implementados
 
-- `node --check` para ambos archivos JavaScript: correcto.
-- Pruebas con DOM simulado sobre los **nueve tipos** de pantalla: campos de consentimiento, 14 preguntas demográficas, cuatro escalas de siete opciones, quinto reactivo de emoción, identificación de imagen y esquema de respuestas.
-- Comparación byte a byte: todas las imágenes del ZIP v9 son idénticas.
-- Comparación de `experiment.js` respecto de v9: **se añadió una sola línea** para instalar el plugin, sin modificar la lógica de guardado, reanudación ni las 1,192 filas del experimento.
-- Limitación: en esta sesión el navegador automatizado bloqueó las páginas locales. Estas son verificaciones de código/DOM simulado, **no** una prueba visual de ejecución con el plugin real de GitHub Pages.
+1. Cuestionario de datos generales: área de preguntas con su propio desplazamiento vertical. El encabezado y el botón **Continuar** permanecen visibles.
+2. `question1`: selector nativo `type=date` con calendario; rechaza fechas posteriores al día actual. Mantiene la respuesta ISO `AAAA-MM-DD`.
+3. `question5` — estado de nacimiento: desplegable con las **32 entidades federativas** (incluida Ciudad de México) y «No nací en México».
+4. `question8` — entidad o país vivido entre 5 y 15 años: desplegable con las 32 entidades federativas y «Otro país». Conserva la clave `question8`, en vez de un radiogroup con 33 botones.
+5. Lengua materna: la exportación de ExpBuilder trae por equivocación dos preguntas llamadas `question8`. Para evitar sobrescribir respuestas, la lengua materna ahora se guarda en `question8_lengua_materna`. Estado/país de infancia conserva `question8`. La definición original de ExpBuilder permanece sin alterar; la corrección se aplica al renderizado y al registro del cuestionario.
+6. Reconocimiento de emociones: las **siete etiquetas originales** se presentan en orden diferente según el `sessionId`, pero *estable durante todos los ensayos de la misma sesión y al reanudarla*. La respuesta sigue siendo **una sola emoción**, con los valores originales. Cada registro de fotografía ahora incluye `cafe_orden_emociones` (arreglo serializado de etiquetas en el orden mostrado).
+7. Primera escala de claridad en **práctica**: ahora es obligatoria, como las demás escalas. Su configuración original venía marcada como opcional.
 
-## Comprobaciones al publicar
+**No se modifican** valores, textos ni claves de las preguntas de reconocimiento de las cinco respuestas `question1`…`question5`, ni la correspondencia foto-respuesta, ni la selección de tres estímulos de prueba. La pregunta emocional sigue siendo **selección única** deliberadamente, por validez de la clasificación de emoción dominante.
 
-1. Recargar con Ctrl+Shift+R; confirmar que `window.CAFENativeDiagnostics.version` sea `"10.0"`.
-2. Comprobar bienvenida, consentimiento e instrucciones en ancho de 320 px; solo una pantalla y controles legibles.
-3. Completar demográficos; comprobar que ninguna pregunta se recorte.
-4. En práctica, verificar **una** foto con **cinco** preguntas, las cuatro filas de 1 a 7, una única foto visible mientras se desplaza el cuestionario. Repetir en escritorio.
-5. Contestar las 3 imágenes principales del modo prueba; comprobar que `cafe_imagen` corresponda a la foto presentada, sin ensayos duplicados.
-6. Revisar consola: `window.CAFENativeDiagnostics` y `window.CAFEBatchDiagnostics`.
+## Pruebas
 
-**Advertencia de guardado:** el servidor `apiData` devolvía HTTP 401/500 en versiones anteriores. La v10 **no altera ni resuelve** la API. No considerar confirmado el guardado remoto ni utilizar con participantes mientras la API siga fallando; IndexedDB local no equivale a Google Drive.
+- `node --check cafe-nativo.js`: correcto.
+- Test DOM simulado de los 9 tipos de ensayo: correcto.
+- Test Chromium **local** usando estilos y JS reales y los JSON de práctica y evaluación: seis resoluciones de datos generales (320, 375, 390, 768, 1024 y 1366 px) y cuatro resoluciones de reconocimiento (320, 390, 768 y 1366 px). Diez configuraciones verificadas: sin desbordamiento, cuestionario desplazable, botón accesible, fecha, 32 entidades, claves separadas y estabilidad de orden por sesión. Se usó un `sessionId` de prueba; no hubo conexión a Firebase en estas pruebas.
+- Comparación SHA-256 de `experiment.js`: **idéntico a v10**.
 
-**Observación preexistente:** la definición demográfica exportada tiene dos preguntas distintas llamadas `question8`. La v10 mantiene la definición y las presenta, pero como ambas comparten clave, las exportaciones pueden contener una única respuesta `question8`. Conviene revisar por separado antes del estudio definitivo.
+## Pendientes externos
+
+- **Guardar en Google Drive:** el `401/500` observado previamente en `apiData` NO ha sido corregido por este parche. IndexedDB no garantiza que la información haya llegado a Drive. Comprobar y resolver antes de reclutar participantes.
+- **Texto del consentimiento:** la versión exportada contiene referencias a «palabras» y «evaluación afectiva de palabras», aunque CAFE muestra rostros. No se modificó automáticamente para no alterar unilateralmente el consentimiento; revisar y corregir según el protocolo aprobado.
+- **Pregunta `question8` de infancia:** si se elige «Otro país», actualmente no se especifica el país. Agregar campo condicional si es relevante para el estudio.
+- **Formato de respuesta emocional:** se conserva la selección única. Alternativa a discutir antes de recolectar: ofrecer «No logro identificar la emoción» como octava categoría para evitar asignaciones forzadas; cambiaría las distribuciones de reconocimiento, por lo que no se aplicó sin decisión metodológica.
+
+## Consola
+
+```js
+window.CAFENativeDiagnostics
+```
+
+Debe indicar `version: "11.0"`. Durante una prueba de reconocimiento mostrará `emotionOptions` y `emotionSessionId`.

@@ -1,4 +1,4 @@
-/* CAFE v10 — Port del patron jsPsych NATIVO utilizado en Juicios Morales.
+/* CAFE v11 — Port del patron jsPsych NATIVO utilizado en Juicios Morales.
  * No interviene el DOM del plugin ExpBuilder: reemplaza el renderer de nueve
  * ensayos manteniendo el mismo timeline, fuentes de estimulos y on_finish.
  */
@@ -9,7 +9,7 @@
     'practice','preparation','experiment','Ending'
   ]);
   const FACE = new Set(['practice','experiment']);
-  const diag = {version:'10.0',strategy:'native-jspsych',installed:[],rendered:0,
+  const diag = {version:'11.0',strategy:'native-jspsych',installed:[],rendered:0,
     lastTrial:null,lastImage:null,lastQuestions:0,submitted:0,errors:[],
     practiceStimuli:0,experimentStimuli:0};
   win.CAFENativeDiagnostics = diag;
@@ -126,7 +126,72 @@
     card.append(footer);
   }
 
-  function renderQuestion(q,index){
+  // México: 32 entidades federativas (INEGI), no 32 estados: CDMX es entidad.
+  const ENTIDADES_MX = Object.freeze([
+    'Aguascalientes','Baja California','Baja California Sur','Campeche',
+    'Chiapas','Chihuahua','Ciudad de México','Coahuila de Zaragoza','Colima',
+    'Durango','Estado de México','Guanajuato','Guerrero','Hidalgo','Jalisco',
+    'Michoacán de Ocampo','Morelos','Nayarit','Nuevo León','Oaxaca','Puebla',
+    'Querétaro','Quintana Roo','San Luis Potosí','Sinaloa','Sonora','Tabasco',
+    'Tamaulipas','Tlaxcala','Veracruz de Ignacio de la Llave','Yucatán','Zacatecas'
+  ]);
+  function normalizedSurveyQuestions(component,face){
+    const source=allQuestions(component);
+    if(face){
+      // La primera escala de práctica venía marcada como opcional en el JSON.
+      // Se requiere la respuesta igual que en los ensayos principales.
+      return source.map(q=>q.name==='question1'&&q.type==='rating'?{...q,isRequired:true}:q);
+    }
+    // Reparar el error original: dos preguntas con nombre question8.
+    // NO modificar el JSON de ExpBuilder: corregir la clave en el resultado.
+    return source.map(q=>{
+      const label=String(q.title||'');
+      if(q.name==='question5'&&/estado naciste/i.test(label)){
+        return {...q,type:'dropdown',choices:[...ENTIDADES_MX,'No nací en México']};
+      }
+      if(q.name==='question8'&&/mayor parte del tiempo entre los 5 y 15/i.test(label)){
+        // Más usable que 33 botones; se conserva la clave original question8.
+        return {...q,type:'dropdown',choices:[...ENTIDADES_MX,'Otro país']};
+      }
+      if(q.name==='question8'&&/lengua materna/i.test(label)){
+        return {...q,name:'question8_lengua_materna'};
+      }
+      return q;
+    });
+  }
+  // Orden de emociones CONTRABALANCEADO entre sesiones y estable al reanudar.
+  // La semilla proviene del sessionId existente en ExpBuilder.
+  const emotionOrderCache=new Map();
+  function emotionOptions(q){
+    const options=values(q);
+    const session=String(win.CAFEBatchDiagnostics?.sessionId||win.JSPSYCH_SESSION_ID||'CAFE-sin-session-id');
+    const key=session+'|'+options.map(v=>v.value).join('|');
+    if(!emotionOrderCache.has(key)){
+      let hash=2166136261>>>0;
+      for(let i=0;i<key.length;i++)hash=Math.imul(hash^key.charCodeAt(i),16777619)>>>0;
+      const ordered=options.slice();
+      for(let i=ordered.length-1;i>0;i--){
+        hash^=hash<<13;hash^=hash>>>17;hash^=hash<<5;
+        const j=(hash>>>0)%(i+1);
+        [ordered[i],ordered[j]]=[ordered[j],ordered[i]];
+      }
+      emotionOrderCache.set(key,ordered);
+    }
+    const ordered=emotionOrderCache.get(key);
+    diag.emotionOptions=ordered.map(v=>v.value);
+    diag.emotionSessionId=session;
+    return ordered;
+  }
+  function todayLocalISO(){
+    const now=new Date();
+    const p=n=>String(n).padStart(2,'0');
+    return now.getFullYear()+'-'+p(now.getMonth()+1)+'-'+p(now.getDate());
+  }
+  function isDemographicBirthDate(q){
+    return q.type==='text'&&q.name==='question1'&&/fecha de nacimiento/i.test(String(q.title||''));
+  }
+
+  function renderQuestion(q,index,face){
     const field=element('fieldset','cafe-native-question');
     const legend=element('legend','cafe-native-label',q.title||q.name);
     if(q.isRequired){const mark=element('span','cafe-native-required',' *');legend.append(mark);}
@@ -150,7 +215,8 @@
       field.append(grid);
     }else if(q.type==='radiogroup'){
       const group=element('div','cafe-native-options');
-      for(const [i,choice] of values(q).entries()){
+      const ordered=face&&q.name==='question5'?emotionOptions(q):values(q);
+      for(const [i,choice] of ordered.entries()){
         const label=element('label','cafe-native-radio');
         const input=element('input');input.type='radio';input.name=controlName;input.value=choice.value;
         label.append(input,element('span','',choice.text));group.append(label);inputs.push(input);
@@ -162,7 +228,9 @@
       for(const ch of values(q)){const o=element('option','',ch.text);o.value=ch.value;select.append(o);}
       field.append(select);inputs=[select];
     }else if(q.type==='text'){
-      const input=element('input','cafe-native-input');input.type='text';input.name=controlName;
+      const input=element('input','cafe-native-input');
+      input.type=isDemographicBirthDate(q)?'date':'text';input.name=controlName;
+      if(input.type==='date'){input.max=todayLocalISO();input.setAttribute('aria-label','Fecha de nacimiento');}
       input.autocomplete='off';field.append(input);inputs=[input];
     }else{throw Error('CAFE: tipo de pregunta no soportado: '+q.type);}
     if(q.defaultValue!==undefined&&q.defaultValue!==null){
@@ -177,7 +245,7 @@
     return info.question.type==='rating'?Number(selected.value):selected.value;
   }
   function renderSurvey(card,surveyComponent,finish,face){
-    const questions=allQuestions(surveyComponent);
+    const questions=normalizedSurveyQuestions(surveyComponent,face);
     const form=element('form','cafe-native-form');form.noValidate=true;
     const inner=element('div','cafe-native-survey-scroll');
     if(!face)inner.append(element('h1','cafe-native-survey-title','Cuestionario sociodemográfico'));
@@ -186,7 +254,7 @@
       inner.append(element('h1','cafe-native-survey-title',intro));
     }
     const records=questions.map((q,i)=>{
-      const info=renderQuestion(q,i);inner.append(info.field);return info;
+      const info=renderQuestion(q,i,face);inner.append(info.field);return info;
     });
     const message=element('p','cafe-native-error');message.role='alert';message.hidden=true;
     inner.append(message);form.append(inner);
@@ -197,7 +265,7 @@
     form.addEventListener('submit',ev=>{
       ev.preventDefault();const answers={};const missing=[];
       for(const record of records){const value=readQuestion(record);
-        if(value===null&&record.question.isRequired){missing.push(record);record.field.classList.add('cafe-native-missing');}
+        if((value===null||(record.question.type==='text'&&isDemographicBirthDate(record.question)&&record.inputs[0]&&!record.inputs[0].checkValidity()))&&record.question.isRequired){missing.push(record);record.field.classList.add('cafe-native-missing');}
         else {record.field.classList.remove('cafe-native-missing');if(value!==null)answers[record.name]=value;}
       }
       if(missing.length){message.hidden=false;message.textContent='Contesta las preguntas obligatorias antes de continuar.';
@@ -222,6 +290,7 @@
     const card=element('section','cafe-native-survey-card');
     renderSurvey(card,surveys[0],result=>{
       const out={...result,cafe_imagen:images[0].stimulus,
+        cafe_orden_emociones:JSON.stringify(diag.emotionOptions||[]),
         [images[0].name+'_type']:'ImageComponent',
         [images[0].name+'_stimulus']:images[0].stimulus,
         [images[0].name+'_coordinates']:asPoint(img).coordinates,
@@ -233,6 +302,7 @@
   function renderDemographics(root,responses,finish){
     if(responses.length!==1||responses[0].type!=='SurveyComponent')throw Error('Cuestionario sociodemográfico cambiado');
     const card=buildCard(root,'','Datos generales');
+    card.classList.add('cafe-native-demographics');
     renderSurvey(card,responses[0],finish,false);
   }
   function install(timeline){
@@ -249,7 +319,7 @@
           const earlier=node.on_finish;
           class CafeNativeTrial {
             static info={name:'cafe-native-'+name.toLowerCase().replace(/_/g,'-'),
-              version:'10.0',parameters:{}};
+              version:'11.0',parameters:{}};
             constructor(jsPsych){this.jsPsych=jsPsych;}
             trial(display){
               const begin=performance.now();
