@@ -1,7 +1,8 @@
-/* CAFE v8 — UNA sola pantalla de ExpBuilder por ensayo.
- * Nunca se duplican las pantallas informativas ni sus botones.
- * En evaluación se REUBICAN los elementos nativos: ImageComponent y SurveyJS.
- * Las definiciones, validaciones, respuestas y navegación originales se conservan.
+/* CAFE v9 — presentación sin renderes duplicados.
+ * Informativas: texto desde definiciones ExpBuilder y BOTONES NATIVOS movidos,
+ * una sola pantalla visible, con restauración segura si el plugin no termina de cargar.
+ * Encuestas: se mueven el SurveyJS y la imagen NATIVOS, sin replicarlos.
+ * La navegación, las respuestas y Firebase permanecen idénticos.
  */
 (function (global, doc) {
   'use strict';
@@ -9,17 +10,18 @@
   const INFOS = new Set(['Bienvenida', 'Consentimiento', 'no_consent', 'Instructions', 'preparation', 'Ending']);
   const IMAGE_RE = /^img\/[\w\-. ()]+\.(?:jpe?g|png|svg|webp)$/i;
   const diagnostics = {
-    version:'8.0', strategy:'single-native-render',
+    version:'9.0', strategy:'one-visible-screen-native-buttons',
     currentTrial:null, stimulus:null, surveyFound:false, surveyVisible:false,
     originalQuestions:0, originalImageFound:false, nativeOnly:true,
-    originalScreensCopied:0, originalImagesDuplicated:0,
+    originalScreensCopied:0, originalImagesDuplicated:0, infoReady:false, informationControls:0,
     practiceStimuli:0, experimentStimuli:0, error:null
   };
   global.CAFELayoutDiagnostics=diagnostics;
   let shell=null, observer=null, frameQueued=false, generation=0, phase='';
   let surveyNode=null, surveyMarker=null, imageNode=null, imageMarker=null;
   let sourceWrapper=null;
-  let oldSurveys=new WeakSet(),oldImages=new WeakSet();
+  let oldSurveys=new WeakSet(),oldImages=new WeakSet(),oldButtons=new WeakSet();
+  let infoButtonMoves=[];
 
   function prepareStimuli(rows, name) {
     if(!FACES.has(name)||!Array.isArray(rows))return;
@@ -41,11 +43,87 @@
     else node.remove();
     marker?.remove();
   }
+  function infoContentFrom(components) {
+    const content=doc.createElement('div');content.className='cafe-info-body';
+    for(const component of (Array.isArray(components)?components:[])){
+      if(component.type==='HtmlComponent'){
+        const panel=doc.createElement('div');panel.className='cafe-info-html';
+        panel.innerHTML=String(component.stimulus||'');
+        // Los estilos incrustados del lienzo de ExpBuilder no son adaptables.
+        for(const el of panel.querySelectorAll('[style],[id]')){el.removeAttribute('style');el.removeAttribute('id');}
+        for(const script of panel.querySelectorAll('script'))script.remove();
+        for(const br of panel.querySelectorAll('br'))br.replaceWith(doc.createTextNode(' '));
+        content.appendChild(panel);
+      }else if(component.type==='TextComponent'){
+        const block=doc.createElement('section');block.className='cafe-info-text';
+        const parts=String(component.text||'').split(/\n\s*\n/).map(t=>t.trim()).filter(Boolean);
+        for(const [i,part] of parts.entries()){
+          const el=doc.createElement(i===0&&component.name==='TextComponent_1'?'h1':'p');
+          el.textContent=part;block.appendChild(el);
+        }
+        content.appendChild(block);
+      }else if(component.type==='ImageComponent'&&IMAGE_RE.test(component.stimulus||'')){
+        const img=doc.createElement('img');img.src=component.stimulus;
+        img.className='cafe-info-logo';img.alt='Imagen del estudio';content.appendChild(img);
+      }
+    }
+    return content;
+  }
+  function nativeButtons(){
+    return Array.from(doc.querySelectorAll('button,input[type=button],input[type=submit],[role=button]'))
+      .filter(el=>!el.closest('#cafe-info-shell,#cafe-evaluation-shell,#jspsych-loading-overlay,#jspsych-captcha-overlay,.cafe-recovery-dialog')&&!oldButtons.has(el));
+  }
+  function normalized(text){return String(text||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('es');}
+  function createInfoShell(trial){
+    const root=doc.createElement('section');root.id='cafe-info-shell';
+    const card=doc.createElement('main');card.className='cafe-info-card';
+    card.appendChild(infoContentFrom(trial?.components));
+    const controls=doc.createElement('footer');controls.className='cafe-info-controls';
+    const buttons=(Array.isArray(trial?.response_components)?trial.response_components:[])
+      .filter(c=>c?.type==='ButtonResponseComponent').flatMap(c=>c.choices||[]);
+    for(const text of buttons){
+      const cell=doc.createElement('div');cell.className='cafe-info-control-cell';
+      cell.dataset.choice=String(text);controls.appendChild(cell);
+    }
+    card.appendChild(controls);root.appendChild(card);doc.body.appendChild(root);
+    return root;
+  }
+  function attachInfo(){
+    if(!shell||phase!=='info'||shell.classList.contains('cafe-ready'))return;
+    const cells=Array.from(shell.querySelectorAll('.cafe-info-control-cell'));
+    if(!cells.length)return;
+    const candidates=nativeButtons(),used=new Set(),matches=[];
+    for(const cell of cells){
+      const name=normalized(cell.dataset.choice);
+      const button=candidates.find(x=>!used.has(x)&&normalized(x.tagName==='INPUT'?x.value:(x.textContent||x.getAttribute('aria-label')) )===name);
+      if(!button)return;
+      used.add(button);matches.push([cell,button]);
+    }
+    const owner=matches[0][1].closest('.jspsych-content-wrapper');
+    // No ocultar ni quitar nada hasta que TODOS los botones se hayan encontrado.
+    for(const [cell,button] of matches){
+      const marker=doc.createComment('CAFE v9 botón nativo');
+      button.parentNode.insertBefore(marker,button);cell.appendChild(button);
+      button.classList.add('cafe-native-info-button');
+      infoButtonMoves.push([button,marker]);
+    }
+    sourceWrapper=owner;
+    if(sourceWrapper)sourceWrapper.classList.add('cafe-native-hidden');
+    shell.classList.add('cafe-ready');
+    diagnostics.infoReady=true;diagnostics.informationControls=matches.length;
+  }
   function destroy(){
     ++generation;
     observer?.disconnect();observer=null;frameQueued=false;
     if(sourceWrapper)sourceWrapper.classList.remove('cafe-native-hidden');
     sourceWrapper=null;
+    for(const [button,marker] of infoButtonMoves){
+      button.classList.remove('cafe-native-info-button');
+      if(marker.parentNode)marker.parentNode.insertBefore(button,marker);
+      else button.remove();
+      marker.remove();
+    }
+    infoButtonMoves=[];
     // Restaurar ambos elementos ANTES de quitar la escena de la evaluación.
     undoMove(surveyNode,surveyMarker);undoMove(imageNode,imageMarker);
     surveyNode=null;surveyMarker=null;imageNode=null;imageMarker=null;
@@ -53,6 +131,7 @@
     doc.body.classList.remove('cafe-informacion','cafe-ensayo','cafe-formulario');
     diagnostics.surveyFound=false;diagnostics.surveyVisible=false;
     diagnostics.originalQuestions=0;diagnostics.originalImageFound=false;diagnostics.error=null;
+    diagnostics.infoReady=false;diagnostics.informationControls=0;
   }
 
   function makeShell(isFace){
@@ -108,7 +187,9 @@
     return marker;
   }
   function attachOriginals(){
-    if(!shell||phase!=='form')return;
+    if(!shell)return;
+    if(phase==='info'){attachInfo();return;}
+    if(phase!=='form')return;
     if(!surveyNode){
       const root=nativeSurveyRoot();
       if(root){
@@ -153,17 +234,30 @@
   function schedule(){if(!shell||frameQueued)return;frameQueued=true;
     (global.requestAnimationFrame||((fn)=>global.setTimeout(fn,0)))(refresh);
   }
-  function setTrialMode(name,imagePath){
+  function setTrialMode(name,imagePath,trial){
     destroy();
     // jsPsych puede mantener el DOM del ensayo anterior unos milisegundos.
     // Ignorar nodos preexistentes, para no mostrar una cara/encuesta anterior.
     oldSurveys=new WeakSet(doc.querySelectorAll('.sd-root-modern,.sd-root-default,.sv-root-modern,.sv-root-default'));
     oldImages=new WeakSet(doc.querySelectorAll('img[src]'));
+    oldButtons=new WeakSet(doc.querySelectorAll('button,input[type=button],input[type=submit],[role=button]'));
     diagnostics.currentTrial=String(name||'');
     diagnostics.stimulus=FACES.has(name)?imagePath||null:null;
     if(INFOS.has(name)){
-      // NO copiamos HTML ni botones. Estilizamos el único renderer original.
-      phase='info';doc.body.classList.add('cafe-informacion');return;
+      phase='info';doc.body.classList.add('cafe-informacion');
+      shell=createInfoShell(trial||{});
+      observer=new MutationObserver(schedule);
+      observer.observe(doc.body,{subtree:true,childList:true});
+      schedule();
+      const myGeneration=generation;
+      global.setTimeout(()=>{
+        if(myGeneration!==generation||!shell||shell.classList.contains('cafe-ready'))return;
+        diagnostics.error='Controles originales no encontrados; se conserva la pantalla de ExpBuilder';
+        console.warn('[CAFE v9] No se encontraron los botones nativos. Se conserva la vista original.');
+        observer?.disconnect();observer=null;
+        shell.remove();shell=null;doc.body.classList.remove('cafe-informacion');phase='';
+      },5000);
+      return;
     }
     if(name==='Demographics'||FACES.has(name)){
       phase='form';

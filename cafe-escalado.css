@@ -2,10 +2,8 @@
 html,body {width:100%; min-width:0;max-width:100%;margin:0;}
 *,*::before,*::after {box-sizing:border-box;}
 body {overflow-x:hidden;}
-body.cafe-ensayo,body.cafe-formulario,body.cafe-informacion {
-  overflow:hidden !important;
-  background:#eef3f5!important;
-}
+body.cafe-ensayo,body.cafe-formulario {overflow:hidden!important;background:#eef3f5!important;}
+body.cafe-informacion {overflow-x:hidden!important;overflow-y:auto!important;background:#eef3f5!important;}
 /* Ocultar la escena absoluta de ExpBuilder SOLO cuando el portal ya tenga
    los controles nativos de la pantalla. Nunca se ocultan antes del render. */
 body .jspsych-content-wrapper.cafe-native-hidden {
@@ -186,60 +184,21 @@ body .jspsych-content-wrapper.cafe-native-hidden {
 }
 
 
-/* === CAFE v8: renderer ÚNICO, sin segundas imágenes ni pantallas === */
-/* Las pantallas informativas se reordenan in situ; los botones son nativos. */
-body.cafe-informacion{overflow-x:hidden!important;overflow-y:auto!important;background:#eef3f5!important;}
-body.cafe-informacion .jspsych-content-wrapper,
-body.cafe-informacion .jspsych-content{
-  position:relative!important;top:auto!important;left:auto!important;
+/* === CAFE v9: información original remaquetada con controles NATIVOS === */
+#cafe-info-shell:not(.cafe-ready){display:none!important;}
+#cafe-info-shell .cafe-info-control-cell{min-width:0;display:flex;justify-content:center;flex:1 1 auto;}
+#cafe-info-shell .cafe-native-info-button{
+  position:relative!important;inset:auto!important;top:auto!important;left:auto!important;
   right:auto!important;bottom:auto!important;transform:none!important;
-  width:100%!important;min-width:0!important;max-width:100%!important;
-  height:auto!important;min-height:0!important;max-height:none!important;
-  margin:0 auto!important;overflow:visible!important;
+  width:auto!important;max-width:100%!important;min-width:100px!important;
+  height:auto!important;min-height:44px!important;
+  margin:0!important;padding:10px 18px!important;float:none!important;
+  font:600 15px/1.2 system-ui,Arial,sans-serif!important;
+  cursor:pointer!important;border-radius:8px!important;
 }
-body.cafe-informacion .jspsych-content-wrapper{
-  display:flex!important;justify-content:center!important;align-items:flex-start!important;
-  padding:clamp(12px,3vw,28px)!important;box-sizing:border-box!important;
-}
-body.cafe-informacion .jspsych-content{
-  background:#fff!important;border:1px solid #dce6ec!important;border-radius:12px!important;
-  padding:clamp(16px,3vw,34px)!important;box-shadow:0 5px 25px rgba(20,48,65,.08)!important;
-  max-width:880px!important;
-}
-body.cafe-informacion .jspsych-content *:not(button):not(input):not(svg):not(path):not(circle){
-  position:static!important;inset:auto!important;top:auto!important;left:auto!important;
-  right:auto!important;bottom:auto!important;transform:none!important;
-  max-width:100%!important;min-width:0!important;box-sizing:border-box!important;
-}
-body.cafe-informacion .jspsych-content div:not(.sd-root-modern):not(.sd-root-default){
-  height:auto!important;max-height:none!important;
-}
-body.cafe-informacion .jspsych-content h1,
-body.cafe-informacion .jspsych-content h2{font-family:system-ui,Arial,sans-serif!important;
-  font-size:clamp(21px,4.2vw,31px)!important;line-height:1.28!important;overflow-wrap:break-word!important;
-  margin:0 0 .75em!important;}
-body.cafe-informacion .jspsych-content p,
-body.cafe-informacion .jspsych-content li,
-body.cafe-informacion .jspsych-content span:not(.sd-rating__item-text),
-body.cafe-informacion .jspsych-content strong{
-  font-family:system-ui,Arial,sans-serif!important;
-  font-size:clamp(14px,2.3vw,17px)!important;line-height:1.48!important;
-  letter-spacing:normal!important;overflow-wrap:break-word!important;
-}
-body.cafe-informacion .jspsych-content img{max-width:100%!important;height:auto!important;object-fit:contain!important;}
-body.cafe-informacion .jspsych-content button,
-body.cafe-informacion .jspsych-content input[type=button],
-body.cafe-informacion .jspsych-content input[type=submit]{
-  position:relative!important;inset:auto!important;transform:none!important;
-  min-height:42px!important;margin:8px!important;padding:9px 15px!important;
-  font:600 14px/1.2 system-ui,Arial,sans-serif!important;max-width:100%!important;
-}
-@media(max-width:750px){
-  body.cafe-informacion .jspsych-content-wrapper{padding:0!important;}
-  body.cafe-informacion .jspsych-content{border:0!important;border-radius:0!important;
-    padding:18px 14px!important;}
-}
-/* El original es el ÚNICO img presente en el portal, reubicado con su nodo DOM. */
+/* El botón nativo debe seguir pudiendo recibir los eventos del plugin. */
+#cafe-info-shell .cafe-native-info-button:focus-visible {outline:3px solid #7cb4cb!important;outline-offset:2px!important;}
+/* El formulario original se oculta SOLO al quedar ambos controles montados. */
 #cafe-evaluation-shell .cafe-native-image-slot{
   width:100%;min-height:0;display:flex;align-items:center;justify-content:center;
 }
@@ -250,17 +209,8 @@ body.cafe-informacion .jspsych-content input[type=submit]{
   height:auto!important;max-height:min(65dvh,430px)!important;object-fit:contain!important;
   margin:0!important;border-radius:7px!important;
 }
-#cafe-evaluation-shell:not(.cafe-ready){visibility:hidden!important;}
+#cafe-evaluation-shell:not(.cafe-ready){display:none!important;}
 @media(max-width:750px){
   #cafe-evaluation-shell .cafe-native-image-slot{height:100%;}
-  #cafe-evaluation-shell .cafe-moved-image{
-    max-height:calc(clamp(150px,27dvh,220px) - 12px)!important;
-  }
-}
-
-/* Suprimir el parpadeo del renderer absoluto mientras se traslada el único
-   contenido nativo al layout; si falla la integración, se restaura a 6 s. */
-body.cafe-ensayo .jspsych-content-wrapper,
-body.cafe-formulario .jspsych-content-wrapper{
-  visibility:hidden!important;pointer-events:none!important;
+  #cafe-evaluation-shell .cafe-moved-image{max-height:calc(clamp(150px,27dvh,220px) - 12px)!important;}
 }
