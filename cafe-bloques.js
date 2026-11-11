@@ -1,0 +1,238 @@
+/* CAFE v13 — bloques configurables, calibración distribuida y progreso global.
+   Mantiene el renderizador nativo y la aleatorización estable por sesión. */
+(function (win, doc) {
+  'use strict';
+  const EMOCIONES = ['Alegría','Tristeza','Enojo','Miedo','Sorpresa'];
+  const CALIBRACIONES = Object.freeze([
+    {image:'img/calibracion_alegria.svg', emotion:'Alegría'},
+    {image:'img/calibracion_tristeza.svg', emotion:'Tristeza'},
+    {image:'img/calibracion_enojo.svg', emotion:'Enojo'},
+    {image:'img/calibracion_miedo.svg', emotion:'Miedo'},
+    {image:'img/calibracion_sorpresa.svg', emotion:'Sorpresa'}
+  ]);
+  const diag={version:'13.0', totalFaces:0, checkpointSize:200, blocks:0, checks:0,
+    positions:[], orderedImages:[], currentKind:null, currentBlock:null, selectedStop:false,
+    calibrationWindow:200};
+  win.CAFEBlocksDiagnostics=diag;
+
+  function hash(seed) {
+    let h=2166136261>>>0;
+    for (const ch of String(seed)) h=Math.imul(h^ch.charCodeAt(0),16777619)>>>0;
+    return h>>>0;
+  }
+  function rng(seed){
+    let s=hash(seed)||1;
+    return ()=>{s+=0x6d2b79f5;let t=s;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};
+  }
+  function shuffle(items, random){
+    const out=items.slice();
+    for(let i=out.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}
+    return out;
+  }
+  function clamp(n,min,max){return Math.max(min,Math.min(max,n));}
+  function calibrationPositions(windowLength, count, random){
+    if(count<=0||windowLength<2)return [];
+    if(count===1){
+      const low=Math.max(1,Math.ceil(windowLength*0.4));
+      const high=Math.max(low,Math.floor(windowLength*0.7));
+      return [clamp(low+Math.floor(random()*Math.max(1,high-low+1)),1,windowLength)];
+    }
+    const firstLow=Math.max(1,Math.ceil(windowLength*0.2));
+    const firstHigh=Math.max(firstLow,Math.floor(windowLength*0.4));
+    const secondLow=Math.max(firstHigh+1,Math.ceil(windowLength*0.6));
+    const secondHigh=Math.max(secondLow,Math.floor(windowLength*0.82));
+    const a=clamp(firstLow+Math.floor(random()*Math.max(1,firstHigh-firstLow+1)),1,windowLength);
+    const b=clamp(secondLow+Math.floor(random()*Math.max(1,secondHigh-secondLow+1)),Math.min(windowLength, a+1),windowLength);
+    return Array.from(new Set([a,b])).sort((x,y)=>x-y);
+  }
+  function buildCalibrationPlan(totalFaces, sessionId, config){
+    const windowSize=Number(config.calibrationWindowSize??200);
+    const requested=Number(config.calibrationsPerWindow??2);
+    if(!Number.isInteger(windowSize)||windowSize<10||windowSize>200)throw Error('CAFE v13: ventana de calibración inválida');
+    if(!Number.isInteger(requested)||requested<0||requested>5)throw Error('CAFE v13: número de calibraciones por ventana inválido');
+    const plan=new Map();
+    let attentionId=0;
+    for(let start=0,winIndex=1; start<totalFaces; start+=windowSize, winIndex++){
+      const length=Math.min(windowSize,totalFaces-start);
+      let count=requested;
+      if(length<80) count=Math.min(count,1);
+      if(length<40) count=0;
+      if(config.testMode===true && length>=2) count=Math.min(1, Math.max(0, requested));
+      const offsets=calibrationPositions(length,count,rng(sessionId+'|window|'+winIndex));
+      const choices=shuffle(CALIBRACIONES,rng(sessionId+'|window|'+winIndex+'|choices'));
+      offsets.forEach((offset,idx)=>{
+        const faceIndex=start+offset; // 1-based global position after which calibration appears
+        const choice=choices[idx % choices.length];
+        attentionId++;
+        if(!plan.has(faceIndex)) plan.set(faceIndex, []);
+        plan.get(faceIndex).push({
+          cafe_kind:'calibracion',
+          cafe_position:faceIndex,
+          cafe_calibration_id:attentionId,
+          cafe_calibration_image:choice.image,
+          cafe_calibration_emotion:choice.emotion,
+          cafe_window:winIndex
+        });
+      });
+    }
+    return {plan, windowSize};
+  }
+  function prepareRows(stimuli, sessionId, config={}){
+    if (!Array.isArray(stimuli)||!stimuli.length)throw Error('CAFE v13: no hay rostros principales');
+    if (!sessionId)throw Error('CAFE v13: falta sessionId para preservar la aleatorización');
+    const checkpointSize=Number(config.blockSize ?? (config.testMode?2:200));
+    if(!Number.isInteger(checkpointSize)||checkpointSize<1||checkpointSize>200)throw Error('CAFE v13: tamaño de bloque inválido');
+    const random=rng(sessionId+'|CAFE-v13-order');
+    const ordered=shuffle(stimuli,random);
+    if(new Set(ordered.map(x=>x.cafe_stimulus)).size!==ordered.length)
+      throw Error('CAFE v13: hay rutas duplicadas entre los estímulos. Revisar antes de publicar.');
+
+    const {plan:calibrationPlan, windowSize}=buildCalibrationPlan(ordered.length, sessionId, {
+      testMode:Boolean(config.testMode),
+      calibrationWindowSize:Number(config.calibrationWindowSize??200),
+      calibrationsPerWindow:Number(config.checksPerBlock??config.calibrationsPerWindow??2)
+    });
+
+    const rows=[];
+    for(let i=0;i<ordered.length;i++){
+      const count=i+1;
+      const block=Math.floor(i/checkpointSize)+1;
+      rows.push({...ordered[i], cafe_kind:'rostro', cafe_block:block, cafe_position:count});
+      const extra=calibrationPlan.get(count)||[];
+      for(const check of extra){
+        rows.push({
+          ...check,
+          cafe_block:block,
+          components_experiment:[], response_components_experiment:[],
+          cafe_stimulus:check.cafe_calibration_image
+        });
+      }
+      if(count<ordered.length && count%checkpointSize===0){
+        rows.push({cafe_kind:'pausa', cafe_block:block, cafe_position:count,
+          components_experiment:[], response_components_experiment:[], cafe_stimulus:'',
+          cafe_next_count:Math.min(checkpointSize, ordered.length-count)});
+      }
+    }
+
+    diag.totalFaces=ordered.length;
+    diag.checkpointSize=checkpointSize;
+    diag.blocks=Math.ceil(ordered.length/checkpointSize);
+    diag.checks=rows.filter(r=>r.cafe_kind==='calibracion').length;
+    diag.positions=rows.filter(r=>r.cafe_kind==='calibracion').map(r=>r.cafe_position);
+    diag.orderedImages=ordered.slice(0,3).map(r=>r.cafe_stimulus);
+    diag.sessionId=sessionId;
+    diag.calibrationWindow=windowSize;
+    return rows;
+  }
+  function create(tag,cls,text){const el=doc.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;}
+  function progressNode(current,total,label){
+    const section=create('section','cafe-progress');
+    const meta=create('div','cafe-progress-meta');
+    meta.append(create('span','cafe-progress-label',label), create('span','cafe-progress-count', `${current} / ${total}`));
+    const bar=create('div','cafe-progress-bar');
+    const fill=create('div','cafe-progress-fill');
+    fill.style.width=`${Math.max(0,Math.min(100,(current/Math.max(1,total))*100))}%`;
+    fill.setAttribute('aria-hidden','true');
+    bar.setAttribute('role','progressbar');
+    bar.setAttribute('aria-valuemin','0');
+    bar.setAttribute('aria-valuemax',String(total));
+    bar.setAttribute('aria-valuenow',String(current));
+    bar.setAttribute('aria-label',label);
+    bar.append(fill); section.append(meta,bar); return section;
+  }
+  function injectProgress(display, current, total, label){
+    const target=display.querySelector('.cafe-native-survey-card') || display.querySelector('.cafe-block-card');
+    if(!target || target.querySelector('.cafe-progress')) return;
+    const node=progressNode(current,total,label||'Progreso general');
+    const header=target.querySelector('.cafe-native-header');
+    if(header && header.nextSibling) target.insertBefore(node, header.nextSibling);
+    else target.insertBefore(node, target.firstChild);
+  }
+  function renderCard(display,sub,title,current,total){
+    const root=create('main','cafe-native cafe-blocks');root.id='cafe-native-root';const card=create('article','cafe-native-card cafe-block-card');
+    const header=create('header','cafe-native-header');
+    header.append(create('span','cafe-native-brand','CAFE · Validación de expresiones faciales'),create('span','cafe-native-phase',sub));
+    card.append(header);
+    if(Number.isFinite(current)&&Number.isFinite(total)) card.append(progressNode(current,total,'Progreso general'));
+    card.append(create('h1','cafe-block-title',title));root.append(card);display.replaceChildren(root);return card;
+  }
+  const choiceOrderCache=new Map();
+  function choicesFor(sessionId){
+    // Reutilizar exactamente el mismo orden que ya vio el participante en la tarea principal.
+    const original=win.CAFENativeDiagnostics?.emotionOptions;
+    if(Array.isArray(original)&&original.length===EMOCIONES.length&&
+        original.every(value=>EMOCIONES.includes(value)))return original;
+    if(!choiceOrderCache.has(sessionId))choiceOrderCache.set(sessionId,shuffle(EMOCIONES,rng(sessionId+'|CAFE-check-options')));
+    return choiceOrderCache.get(sessionId);
+  }
+  function install(timeline, jsPsych){
+    const candidates=[];
+    function walk(nodes){for(const node of nodes||[]){if(node?.data?.trial_name==='experiment'&&node.type)candidates.push(node);if(Array.isArray(node?.timeline))walk(node.timeline);}}
+    walk(timeline);
+    if(candidates.length!==1)throw Error('CAFE v13: se esperaba un único ensayo experimental');
+    const experimentTrial=candidates[0];
+    const faceTrial=experimentTrial.type;
+    const session=String(diag.sessionId);
+    class CafeBlockTrial {
+      static info={name:'cafe-blocks',version:'13.0',parameters:{},data:{
+        rt:{type:'INT'},cafe_tipo_fila:{type:'STRING'},cafe_bloque:{type:'INT'},
+        cafe_calibracion_respuesta:{type:'STRING'},cafe_calibracion_correcta:{type:'BOOL'},
+        cafe_decision_bloque:{type:'STRING'}}};
+      constructor(jsp){this.jsPsych=jsp;}
+      trial(display){
+        const kind=this.jsPsych.evaluateTimelineVariable('cafe_kind');
+        const block=this.jsPsych.evaluateTimelineVariable('cafe_block');
+        const position=this.jsPsych.evaluateTimelineVariable('cafe_position');
+        diag.currentKind=kind;diag.currentBlock=block;
+        if(kind==='rostro'){
+          const result=new faceTrial(this.jsPsych).trial(display);
+          injectProgress(display, position, diag.totalFaces, 'Progreso general');
+          return result;
+        }
+        const started=performance.now();
+        if(kind==='calibracion'){
+          const image=this.jsPsych.evaluateTimelineVariable('cafe_calibration_image');
+          const correct=this.jsPsych.evaluateTimelineVariable('cafe_calibration_emotion');
+          const id=this.jsPsych.evaluateTimelineVariable('cafe_calibration_id');
+          const card=renderCard(display,'Comprobación breve','¿Qué emoción expresa este dibujo?',position,diag.totalFaces);
+          card.append(create('p','cafe-block-help','Selecciona la emoción que mejor corresponde al dibujo.'));
+          const img=create('img','cafe-calibration-image');img.src=image;img.alt='Ilustración esquemática de una expresión emocional';card.append(img);
+          const form=create('form','cafe-calibration-form');
+          const field=create('fieldset','cafe-calibration-options');field.append(create('legend','cafe-block-sr','Emoción representada'));
+          for(const emotion of choicesFor(session)){
+            const label=create('label','cafe-calibration-option');const input=create('input');input.type='radio';input.name='cafe-calibracion';input.value=emotion;input.required=true;
+            label.append(input,create('span','',emotion));field.append(label);
+          }
+          const footer=create('footer','cafe-native-footer');const button=create('button','cafe-native-button','Continuar');button.type='submit';footer.append(button);form.append(field,footer);card.append(form);
+          form.addEventListener('submit',ev=>{ev.preventDefault();const answer=field.querySelector('input:checked');if(!answer)return;
+            button.disabled=true;
+            this.jsPsych.finishTrial({rt:Math.round(performance.now()-started),cafe_tipo_fila:'calibracion',
+              cafe_calibracion_id:id,cafe_imagen:image,cafe_calibracion_esperada:correct,
+              cafe_calibracion_respuesta:answer.value,cafe_calibracion_correcta:answer.value===correct,
+              cafe_bloque:block,cafe_posicion_global:position});
+          });
+          return;
+        }
+        if(kind==='pausa'){
+          const next=this.jsPsych.evaluateTimelineVariable('cafe_next_count');
+          const card=renderCard(display,'Punto de control',`Has completado ${position} de ${diag.totalFaces} evaluaciones`,position,diag.totalFaces);
+          card.append(create('p','cafe-block-help',`Tus respuestas se han registrado en la sesión actual. Cuando quieras, puedes continuar con el siguiente grupo de ${next} imágenes.`));
+          const footer=create('footer','cafe-native-footer cafe-block-pause-actions');
+          const cont=create('button','cafe-native-button','Continuar');cont.type='button';
+          footer.append(cont);card.append(footer);
+          cont.addEventListener('click',()=>{
+            cont.disabled=true;
+            diag.selectedStop=false;
+            jsPsych.finishTrial({rt:Math.round(performance.now()-started),cafe_tipo_fila:'pausa',
+              cafe_decision_bloque:'continuar',cafe_bloque:block,cafe_posicion_global:position});
+          });
+          return;
+        }
+        throw Error('CAFE v13: fila desconocida '+kind);
+      }
+    }
+    experimentTrial.type=CafeBlockTrial;
+    diag.installed=true;
+  }
+  win.CAFEBlocks={prepareRows,install};
+})(window,document);

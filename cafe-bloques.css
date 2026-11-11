@@ -1,0 +1,18 @@
+/* CAFE v13: calibración uniforme, checkpoints y barra de progreso global. */
+.cafe-blocks{display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:clamp(8px,2.5vw,28px);box-sizing:border-box}
+.cafe-blocks .cafe-block-card{width:min(100%,700px);max-width:700px;box-sizing:border-box;overflow:hidden}
+.cafe-block-title{font-size:clamp(1.25rem,2.8vw,1.85rem);line-height:1.2;margin:22px clamp(16px,3vw,28px) 10px}
+.cafe-block-help{font-size:clamp(.95rem,2.5vw,1.08rem);line-height:1.5;margin:10px clamp(16px,3vw,28px) 16px}
+.cafe-progress{padding:14px clamp(16px,3vw,28px) 0}
+.cafe-progress-meta{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;font-size:.92rem;color:#486575}
+.cafe-progress-label{font-weight:600;color:#264350}
+.cafe-progress-count{white-space:nowrap;font-variant-numeric:tabular-nums}
+.cafe-progress-bar{width:100%;height:10px;border-radius:999px;background:#e6eef2;overflow:hidden}
+.cafe-progress-fill{height:100%;border-radius:999px;background:#286476;transition:width .2s ease-out}
+.cafe-calibration-image{display:block;width:min(220px,60vw);height:min(220px,60vw);object-fit:contain;margin:12px auto 18px}
+.cafe-calibration-options{border:0;margin:8px clamp(16px,3vw,28px);padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cafe-calibration-option{display:flex;align-items:center;gap:10px;min-width:0;background:var(--cafe-card-bg,#f5f8fa);border:1px solid #dce4e8;padding:11px 10px;border-radius:9px;cursor:pointer;font-size:.97rem}
+.cafe-calibration-option input{flex:none;accent-color:#0d5e7a}
+.cafe-block-pause-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.cafe-block-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:450px){.cafe-calibration-options{grid-template-columns:1fr}.cafe-block-pause-actions .cafe-native-button{width:100%}.cafe-blocks .cafe-block-card{max-height:calc(100dvh - 20px);overflow:auto}.cafe-progress-meta{font-size:.88rem}}

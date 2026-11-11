@@ -1,21 +1,85 @@
-# CAFE v11.1 — aviso de metadatos jsPsych
+# CAFE v13 — checkpoints, progreso global y calibración de 5 emociones
 
-Este parche se aplica sobre **CAFE v11**. Corrige la advertencia de consola `cafe-native-bienvenida is missing the data field`.
+**Base:** CAFE v12. Esta versión conserva el renderizador nativo, la aleatorización estable por sesión y el guardado local incremental. Está pensada para instalarse como **paquete completo**, especialmente si todavía no se instaló v12.
 
-## Cambios
+## Cambios principales
 
-- `cafe-nativo.js`: añade `data` a `static info` para los nueve plugins nativos de CAFE, describiendo `rt` y, según el ensayo, `response`, `SurveyComponent_1_response`, `cafe_imagen` y `cafe_orden_emociones`.
-- `index.html`: actualiza únicamente la referencia de `cafe-nativo.js?v=11.1` para evitar la caché.
-- `CAFENativeDiagnostics.version` y metadatos de plugin pasan a 11.1.
+1. **Checkpoints sin invitar a salir.**
+   - La pantalla intermedia ahora se presenta como **Punto de control**.
+   - Muestra: **"Has completado X de Y evaluaciones"**.
+   - Tiene solo un botón principal: **Continuar**.
+   - Ya no aparece la formulación de "evaluaciones sugeridas" ni un botón destacado para terminar.
 
-## Instalación
+2. **Barra de progreso basada en el conjunto completo.**
+   - Se añade una barra de progreso en:
+     - los ensayos principales de reconocimiento,
+     - las pantallas de calibración,
+     - los checkpoints.
+   - La referencia es el **total completo de rostros del set**, no el tamaño del bloque.
 
-Sube únicamente `index.html` y `cafe-nativo.js` a la raíz del repositorio GitHub, sustituyendo los existentes. **No reemplaces `experiment.js`, `cafe-nativo.css` ni las fotografías.**
+3. **Calibración con 5 emociones y tamaño uniforme.**
+   - Se sustituyen los controles previos por cinco dibujos del mismo tamaño:
+     - Alegría
+     - Tristeza
+     - Enojo
+     - Miedo
+     - Sorpresa
+   - Se excluye la emoción neutra.
+   - Los archivos nuevos son SVG para asegurar el mismo tamaño visual y buena nitidez.
 
-## Alcance
+4. **Calibraciones distribuidas a lo largo de la tarea, no por checkpoint pequeño.**
+   - Las calibraciones siguen distribuyéndose en **ventanas de 200 rostros**.
+   - Por defecto se mantienen **2 calibraciones por cada 200 rostros**.
+   - Esto es **independiente** del tamaño del checkpoint.
+   - Ejemplo: si se usa `window.CAFE_TAMANO_BLOQUE = 10`, seguirá habiendo checkpoints cada 10 rostros, **pero no** 2 calibraciones por cada 10; las calibraciones continúan dosificadas a lo largo de 200 rostros.
 
-No se alteran ninguna pregunta, respuestas, escalas, estímulos, orden de emociones, ensayos, aleatorización, controles del formulario, IndexedDB, Firebase, API ni Google Drive. `data` es la declaración de los tipos de campos que produce el plugin; el registro efectivo enviado mediante `finishTrial` queda intacto.
+5. **Aleatorización de emociones en cada ensayo.**
+   - La pregunta de emoción en la tarea principal **sí se aleatoriza**.
+   - El orden se contrabalancea por participante usando la sesión como semilla.
+   - Ese orden se conserva al reanudar la sesión.
+   - Los ensayos de calibración reutilizan el mismo orden de respuesta.
 
-## Pendiente: 401 / 500
+6. **Cuestionario sociodemográfico.**
+   - Se conserva la barra de desplazamiento interna.
+   - La fecha de nacimiento sigue usando selector de calendario.
+   - La pregunta de estado mantiene la lista de entidades federativas de México.
 
-El servidor `https://us-central1-test-e4cf9.cloudfunctions.net/apiData` ha respondido con errores HTTP 401 y 500. Este parche **no corrige** esos errores. En DevTools, pestaña Network, selecciona el registro fallido para verificar el método (POST), la URL, y `Response` (sin compartir nombres, datos del participante, tokens, cookies ni información privada). `CAFEBatchDiagnostics` permite inspeccionar `lastHttpStatus` y `pendingRemote`. No se debe dar por confirmado el guardado remoto sin un `apiConfirmed` mayor que cero y el CSV comprobado en Drive.
+## Configuración relevante en `index.html`
+
+```javascript
+window.CAFE_MODO_PRUEBA = true;
+window.CAFE_TAMANO_BLOQUE = 200;
+window.CAFE_TAMANO_BLOQUE_PRUEBA = 2;
+window.CAFE_CALIBRACIONES_POR_BLOQUE = 2;
+```
+
+### Importante
+- `CAFE_TAMANO_BLOQUE` controla la frecuencia de los **checkpoints**.
+- `CAFE_CALIBRACIONES_POR_BLOQUE` ahora se interpreta como el número de calibraciones por **ventana estándar de 200 rostros**.
+- Si se quiere probar checkpoints pequeños, por ejemplo 10, basta con cambiar:
+
+```javascript
+window.CAFE_TAMANO_BLOQUE = 10;
+```
+
+## Sobre el error HTTP 401
+
+Esta versión **no elimina** el `401` observado en consola. Ese error parece provenir del flujo remoto de autenticación o guardado del backend (`apiData` / `updateSessionName`) y no del renderizado local de la tarea.
+
+## Archivos principales incluidos
+
+- `index.html`
+- `experiment.js`
+- `cafe-nativo.js`
+- `cafe-nativo.css`
+- `cafe-bloques.js`
+- `cafe-bloques.css`
+- `img/calibracion_alegria.svg`
+- `img/calibracion_tristeza.svg`
+- `img/calibracion_enojo.svg`
+- `img/calibracion_miedo.svg`
+- `img/calibracion_sorpresa.svg`
+
+## Recomendación de instalación
+
+Como aún no se instaló v12, usar directamente el **paquete completo v13**.
