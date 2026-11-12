@@ -18,22 +18,22 @@ window.CAFE_MODO_PRUEBA = false;
 // ===== 2. CHECKPOINTS =====
 // Cantidad de rostros antes de cada punto de control: de 1 a 200.
 // La meta de un profesor activa un punto de control adicional justo al alcanzarse.
-window.CAFE_TAMANO_BLOQUE = 50;
+window.CAFE_TAMANO_BLOQUE = 10;
 // Solo para probar la navegación entre checkpoints con 3 rostros.
 window.CAFE_TAMANO_BLOQUE_PRUEBA = 2;
 
 // ===== 3. CALIBRACIONES =====
 // Por defecto: cuatro comprobaciones de atención por cada 100 rostros.
 // La distribución es independiente de la frecuencia de checkpoints.
-window.CAFE_CALIBRACIONES_POR_100 = 4;
-window.CAFE_VENTANA_CALIBRACION = 50;
+window.CAFE_CALIBRACIONES_POR_100 = 5;
+window.CAFE_VENTANA_CALIBRACION = 20;
 
 // ===== 4. GRUPOS PARA PUNTOS EXTRA =====
 // 'meta' = número de rostros principales que debe evaluar el estudiante.
 // 'etiqueta' = nombre legible del grupo. El enlace contiene solo su clave.
 // A continuación hay ejemplos; reemplázalos por tus cursos reales.
 window.CAFE_CURSOS = {
-  'grupo-50':  { meta: 50,  etiqueta: 'Grupo A' }
+  'grupo-50':  { meta: 20,  etiqueta: 'Grupo A' }
 };
 
 // ===== 5. GUARDADO / NOMBRE DE SESIÓN =====
