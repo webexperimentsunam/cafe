@@ -24,7 +24,7 @@ window.CAFE_TAMANO_BLOQUE_PRUEBA = 2;
 
 // ===== 3. CALIBRACIONES =====
 // Por defecto: cuatro comprobaciones de atención por cada 100 rostros.
-// La distribución es independiente de la frecuencia de checkpoints.
+// La distribución es independiente de la frecuencia de checkpoints..
 window.CAFE_CALIBRACIONES_POR_100 = 5;
 window.CAFE_VENTANA_CALIBRACION = 20;
 
