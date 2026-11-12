@@ -1,4 +1,4 @@
-/* CAFE v13 — bloques configurables, calibración distribuida y progreso global.
+/* CAFE v13.3 — checkpoints, 4 calibraciones por 100 y progreso global.
    Mantiene el renderizador nativo y la aleatorización estable por sesión. */
 (function (win, doc) {
   'use strict';
@@ -10,9 +10,9 @@
     {image:'img/calibracion_miedo.svg', emotion:'Miedo'},
     {image:'img/calibracion_sorpresa.svg', emotion:'Sorpresa'}
   ]);
-  const diag={version:'13.0', totalFaces:0, checkpointSize:200, blocks:0, checks:0,
+  const diag={version:'13.3', totalFaces:0, checkpointSize:200, blocks:0, checks:0,
     positions:[], orderedImages:[], currentKind:null, currentBlock:null, selectedStop:false,
-    calibrationWindow:200};
+    calibrationWindow:100};
   win.CAFEBlocksDiagnostics=diag;
 
   function hash(seed) {
@@ -32,42 +32,41 @@
   function clamp(n,min,max){return Math.max(min,Math.min(max,n));}
   function calibrationPositions(windowLength, count, random){
     if(count<=0||windowLength<2)return [];
-    if(count===1){
-      const low=Math.max(1,Math.ceil(windowLength*0.4));
-      const high=Math.max(low,Math.floor(windowLength*0.7));
-      return [clamp(low+Math.floor(random()*Math.max(1,high-low+1)),1,windowLength)];
+    // Una comprobación en cada sector del tramo. Se evita agrupar cuatro
+    // calibraciones y se conserva la variación aleatoria por sesión.
+    const positions=[];
+    for(let i=0;i<count;i++){
+      const center=(i+0.5)*windowLength/count;
+      const spread=Math.max(0,windowLength/count*0.23);
+      const low=Math.max(i===0?1:positions[i-1]+1,Math.ceil(center-spread));
+      const high=Math.min(windowLength-(count-i-1),Math.max(low,Math.floor(center+spread)));
+      positions.push(Math.max(low,Math.min(high,low+Math.floor(random()*(high-low+1)))));
     }
-    const firstLow=Math.max(1,Math.ceil(windowLength*0.2));
-    const firstHigh=Math.max(firstLow,Math.floor(windowLength*0.4));
-    const secondLow=Math.max(firstHigh+1,Math.ceil(windowLength*0.6));
-    const secondHigh=Math.max(secondLow,Math.floor(windowLength*0.82));
-    const a=clamp(firstLow+Math.floor(random()*Math.max(1,firstHigh-firstLow+1)),1,windowLength);
-    const b=clamp(secondLow+Math.floor(random()*Math.max(1,secondHigh-secondLow+1)),Math.min(windowLength, a+1),windowLength);
-    return Array.from(new Set([a,b])).sort((x,y)=>x-y);
+    return positions;
   }
   function buildCalibrationPlan(totalFaces, sessionId, config){
-    const windowSize=Number(config.calibrationWindowSize??200);
-    const requested=Number(config.calibrationsPerWindow??2);
-    if(!Number.isInteger(windowSize)||windowSize<10||windowSize>200)throw Error('CAFE v13: ventana de calibración inválida');
-    if(!Number.isInteger(requested)||requested<0||requested>5)throw Error('CAFE v13: número de calibraciones por ventana inválido');
+    const windowSize=Number(config.calibrationWindowSize??100);
+    const requested=Number(config.calibrationsPerWindow??4);
+    if(!Number.isInteger(windowSize)||windowSize<10||windowSize>200)throw Error('CAFE v13.3: ventana de calibración inválida');
+    if(!Number.isInteger(requested)||requested<0||requested>5)throw Error('CAFE v13.3: número de calibraciones por ventana inválido');
     const plan=new Map();
     let attentionId=0;
     for(let start=0,winIndex=1; start<totalFaces; start+=windowSize, winIndex++){
       const length=Math.min(windowSize,totalFaces-start);
-      let count=requested;
-      if(length<80) count=Math.min(count,1);
-      if(length<40) count=0;
-      if(config.testMode===true && length>=2) count=Math.min(1, Math.max(0, requested));
-      const offsets=calibrationPositions(length,count,rng(sessionId+'|window|'+winIndex));
+      // En el tramo final se conserva una densidad similar al resto.
+      let count=Math.min(requested,Math.round(requested*length/windowSize));
+      // Tres rostros de prueba: solo un control, después del primero.
+      if(config.testMode===true)count=length>=2&&requested>0?1:0;
+      const offsets=config.testMode===true&&count===1?[1]:
+        calibrationPositions(length,count,rng(sessionId+'|window|'+winIndex));
       const choices=shuffle(CALIBRACIONES,rng(sessionId+'|window|'+winIndex+'|choices'));
       offsets.forEach((offset,idx)=>{
-        const faceIndex=start+offset; // 1-based global position after which calibration appears
+        const faceIndex=start+offset;
         const choice=choices[idx % choices.length];
         attentionId++;
         if(!plan.has(faceIndex)) plan.set(faceIndex, []);
         plan.get(faceIndex).push({
-          cafe_kind:'calibracion',
-          cafe_position:faceIndex,
+          cafe_kind:'calibracion',cafe_position:faceIndex,
           cafe_calibration_id:attentionId,
           cafe_calibration_image:choice.image,
           cafe_calibration_emotion:choice.emotion,
@@ -78,19 +77,19 @@
     return {plan, windowSize};
   }
   function prepareRows(stimuli, sessionId, config={}){
-    if (!Array.isArray(stimuli)||!stimuli.length)throw Error('CAFE v13: no hay rostros principales');
-    if (!sessionId)throw Error('CAFE v13: falta sessionId para preservar la aleatorización');
+    if (!Array.isArray(stimuli)||!stimuli.length)throw Error('CAFE v13.3: no hay rostros principales');
+    if (!sessionId)throw Error('CAFE v13.3: falta sessionId para preservar la aleatorización');
     const checkpointSize=Number(config.blockSize ?? (config.testMode?2:200));
-    if(!Number.isInteger(checkpointSize)||checkpointSize<1||checkpointSize>200)throw Error('CAFE v13: tamaño de bloque inválido');
-    const random=rng(sessionId+'|CAFE-v13-order');
+    if(!Number.isInteger(checkpointSize)||checkpointSize<1||checkpointSize>200)throw Error('CAFE v13.3: tamaño de bloque inválido');
+    const random=rng(sessionId+'|CAFE-v13.3-order');
     const ordered=shuffle(stimuli,random);
     if(new Set(ordered.map(x=>x.cafe_stimulus)).size!==ordered.length)
-      throw Error('CAFE v13: hay rutas duplicadas entre los estímulos. Revisar antes de publicar.');
+      throw Error('CAFE v13.3: hay rutas duplicadas entre los estímulos. Revisar antes de publicar.');
 
     const {plan:calibrationPlan, windowSize}=buildCalibrationPlan(ordered.length, sessionId, {
       testMode:Boolean(config.testMode),
-      calibrationWindowSize:Number(config.calibrationWindowSize??200),
-      calibrationsPerWindow:Number(config.checksPerBlock??config.calibrationsPerWindow??2)
+      calibrationWindowSize:Number(config.calibrationWindowSize??100),
+      calibrationsPerWindow:Number(config.calibrationsPerWindow??config.checksPerBlock??4)
     });
 
     const rows=[];
@@ -115,6 +114,7 @@
     }
 
     diag.totalFaces=ordered.length;
+    diag.testMode=Boolean(config.testMode);
     diag.checkpointSize=checkpointSize;
     diag.blocks=Math.ceil(ordered.length/checkpointSize);
     diag.checks=rows.filter(r=>r.cafe_kind==='calibracion').length;
@@ -169,12 +169,12 @@
     const candidates=[];
     function walk(nodes){for(const node of nodes||[]){if(node?.data?.trial_name==='experiment'&&node.type)candidates.push(node);if(Array.isArray(node?.timeline))walk(node.timeline);}}
     walk(timeline);
-    if(candidates.length!==1)throw Error('CAFE v13: se esperaba un único ensayo experimental');
+    if(candidates.length!==1)throw Error('CAFE v13.3: se esperaba un único ensayo experimental');
     const experimentTrial=candidates[0];
     const faceTrial=experimentTrial.type;
     const session=String(diag.sessionId);
     class CafeBlockTrial {
-      static info={name:'cafe-blocks',version:'13.0',parameters:{},data:{
+      static info={name:'cafe-blocks',version:'13.3',parameters:{},data:{
         rt:{type:'INT'},cafe_tipo_fila:{type:'STRING'},cafe_bloque:{type:'INT'},
         cafe_calibracion_respuesta:{type:'STRING'},cafe_calibracion_correcta:{type:'BOOL'},
         cafe_decision_bloque:{type:'STRING'}}};
@@ -215,20 +215,37 @@
         }
         if(kind==='pausa'){
           const next=this.jsPsych.evaluateTimelineVariable('cafe_next_count');
-          const card=renderCard(display,'Punto de control',`Has completado ${position} de ${diag.totalFaces} evaluaciones`,position,diag.totalFaces);
-          card.append(create('p','cafe-block-help',`Tus respuestas se han registrado en la sesión actual. Cuando quieras, puedes continuar con el siguiente grupo de ${next} imágenes.`));
+          const isTest=diag.testMode===true;
+          // Una opción de cierre discreta solo al alcanzar la meta de 200,
+          // o al cruzar ese umbral cuando el checkpoint no es divisor de 200.
+          // En modo de prueba se presenta para verificar ambas rutas.
+          const offerStop=isTest || (position>=200 &&
+            Math.floor(position/200)>Math.floor((position-diag.checkpointSize)/200));
+          const card=renderCard(display,'Punto de control',
+            `Has completado ${position} de ${diag.totalFaces} evaluaciones`,position,diag.totalFaces);
+          card.append(create('p','cafe-block-help',
+            'Has llegado a un punto de control. Puedes continuar con el siguiente grupo de imágenes.'));
           const footer=create('footer','cafe-native-footer cafe-block-pause-actions');
           const cont=create('button','cafe-native-button','Continuar');cont.type='button';
-          footer.append(cont);card.append(footer);
-          cont.addEventListener('click',()=>{
-            cont.disabled=true;
-            diag.selectedStop=false;
+          footer.append(cont);
+          let stop;
+          if(offerStop){
+            stop=create('button','cafe-native-button cafe-block-stop','Finalizar mi participación');
+            stop.type='button';footer.append(stop);
+          }
+          card.append(footer);
+          let done=false;
+          function finish(decision){
+            if(done)return;done=true;cont.disabled=true;if(stop)stop.disabled=true;
+            diag.selectedStop=decision==='finalizar';
             jsPsych.finishTrial({rt:Math.round(performance.now()-started),cafe_tipo_fila:'pausa',
-              cafe_decision_bloque:'continuar',cafe_bloque:block,cafe_posicion_global:position});
-          });
+              cafe_decision_bloque:decision,cafe_bloque:block,cafe_posicion_global:position});
+          }
+          cont.addEventListener('click',()=>finish('continuar'));
+          if(stop)stop.addEventListener('click',()=>finish('finalizar'));
           return;
         }
-        throw Error('CAFE v13: fila desconocida '+kind);
+        throw Error('CAFE v13.3: fila desconocida '+kind);
       }
     }
     experimentTrial.type=CafeBlockTrial;

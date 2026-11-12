@@ -168,13 +168,14 @@
   // En producción: 200. En modo prueba: 2, para verificar la pausa con 3 rostros.
   window.CAFE_TAMANO_BLOQUE = 200;
   window.CAFE_TAMANO_BLOQUE_PRUEBA = 2;
-  // Dos comprobaciones breves por cada bloque de 200 (una por bloque de prueba).
-  window.CAFE_CALIBRACIONES_POR_BLOQUE = 2;
-  // Las calibraciones se distribuyen a lo largo de ventanas de 200 rostros,
+  // Cuatro calibraciones por cada 100 rostros, independientes del tamaño del checkpoint.
+  window.CAFE_CALIBRACIONES_POR_100 = 4;
+  window.CAFE_VENTANA_CALIBRACION = 100;
+  // Las calibraciones se distribuyen a lo largo de ventanas de 100 rostros,
   // independientemente del tamaño del checkpoint configurado arriba.
 </script>
 <link rel="stylesheet" href="./cafe-nativo.css?v=11">
 <script src="./cafe-nativo.js?v=11.1"></script>
-<link rel="stylesheet" href="./cafe-bloques.css?v=13">
-<script src="./cafe-bloques.js?v=13"></script>
-<script id="generated-script" src="./experiment.js?v=10"></script></body></html>
+<link rel="stylesheet" href="./cafe-bloques.css?v=13.3">
+<script src="./cafe-bloques.js?v=13.3"></script>
+<script id="generated-script" src="./experiment.js?v=13.3"></script></body></html>

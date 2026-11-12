@@ -1033,12 +1033,18 @@ const m9e = decideBranch;
 
   async function _updateSessionName(sessionId, sessionName) {
     try {
-      await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
+      const renameResponse = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "updateSessionName", experimentID: "17e49b08-828f-4321-b62d-c040a5c1c3ea", sessionId, sessionName }),
       });
-    } catch (e) {}
+      // Diagnóstico no invasivo: distinguir el posible HTTP 401 del cambio
+      // de nombre de los errores en el guardado de respuestas.
+      if (!renameResponse.ok) {
+        console.warn('CAFE: updateSessionName HTTP ' + renameResponse.status +
+          ' (no es una confirmación del estado de apiData por ensayo).');
+      }
+    } catch (e) { console.warn('CAFE: updateSessionName no disponible', e); }
   }
 
   
@@ -1223,7 +1229,15 @@ const m9e = decideBranch;
     // Cambiar de modo prueba a modo completo entre visitas invalida los indices del loop.
     const cafeModeKey = 'expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-test-mode';
     const oldMode = localStorage.getItem(cafeModeKey);
-    const currentMode = window.CAFE_MODO_PRUEBA === true ? 'test' : 'full';
+    // El orden de los índices cambia si cambia el tamaño del bloque o el patrón
+    // de calibración. Evitar reanudar un checkpoint con otra configuración.
+    const currentMode = [
+      window.CAFE_MODO_PRUEBA === true ? 'test' : 'full',
+      'v13.3-bloques',
+      Number(window.CAFE_MODO_PRUEBA === true ? window.CAFE_TAMANO_BLOQUE_PRUEBA : window.CAFE_TAMANO_BLOQUE),
+      Number(window.CAFE_VENTANA_CALIBRACION),
+      Number(window.CAFE_CALIBRACIONES_POR_100)
+    ].join('-');
     let isFreshChoice = false;
     if (isResuming) {
       const decision = await _cafeChooseResume();
@@ -1787,7 +1801,7 @@ const timeline = [];
 
     const globalPreload = {
       type: jsPsychPreload,
-      images: ["img/feliz.png","img/logos.svg","img/soprendida.png","img/surprise_M-LA-07.jpg","img/surprise_M-LA-08.jpg","img/surprise_M-LA-09.jpg","img/surprise_M-LA-10.jpg","img/triste.png"],
+      images: ["img/feliz.png","img/logos.svg","img/soprendida.png","img/stimuli/surprise_M-LA-07.jpg","img/stimuli/surprise_M-LA-08.jpg","img/stimuli/surprise_M-LA-09.jpg","img/surprise_M-LA-10.jpg","img/triste.png"],
       audio: [],
       video: []
     };
@@ -155174,7 +155188,7 @@ window.ExpBuilderNavigation?.registerTrial(1794334785465, preparation_procedure)
         "width": 20,
         "height": 20,
         "zIndex": 2,
-        "stimulus": "img/surprise_M-LA-07.jpg",
+        "stimulus": "img/stimuli/surprise_M-LA-07.jpg",
         "name": "ImageComponent_1"
       }
     ],
@@ -155302,7 +155316,7 @@ window.ExpBuilderNavigation?.registerTrial(1794334785465, preparation_procedure)
         "width": 20,
         "height": 20,
         "zIndex": 2,
-        "stimulus": "img/surprise_M-LA-08.jpg",
+        "stimulus": "img/stimuli/surprise_M-LA-08.jpg",
         "name": "ImageComponent_1"
       }
     ],
@@ -155430,7 +155444,7 @@ window.ExpBuilderNavigation?.registerTrial(1794334785465, preparation_procedure)
         "width": 20,
         "height": 20,
         "zIndex": 2,
-        "stimulus": "img/surprise_M-LA-09.jpg",
+        "stimulus": "img/stimuli/surprise_M-LA-09.jpg",
         "name": "ImageComponent_1"
       }
     ],
@@ -155678,6 +155692,22 @@ window.ExpBuilderNavigation?.registerTrial(1794334785465, preparation_procedure)
 ];
     // CAFE v4: la foto y las preguntas comparten un contenedor responsive.
     window.CAFEResponsive?.prepareStimuli?.(test_stimuli_loop_1794335806908, 'experiment');
+    // v13.3: ubicación central de las fotos principales en GitHub.
+    // No modifica la práctica, los cuestionarios, ni las imágenes de calibración.
+    for (const stimulo of test_stimuli_loop_1794335806908) {
+      const imagen=stimulo.components_experiment?.find(c => c.type === 'ImageComponent');
+      if (!imagen) throw new Error('CAFE v13.3: estímulo principal sin ImageComponent');
+      const rutaOriginal=String(imagen.stimulus);
+      const archivo=rutaOriginal.split('/').pop();
+      if (!/^[A-Za-z0-9_.-]+\.(jpg|jpeg|png|webp)$/i.test(archivo)) {
+        throw new Error('CAFE v13.3: nombre de imagen no válido: '+archivo);
+      }
+      stimulo.cafe_stimulus_original=rutaOriginal;
+      const rutaNueva='img/stimuli/'+archivo;
+      imagen.stimulus=rutaNueva;
+      stimulo.cafe_stimulus=rutaNueva;
+    }
+
 
     
     
@@ -155792,8 +155822,21 @@ data: {
     },
     
     on_finish: function(data) {
-    
-    
+      // Los marcadores de atencion y de pausa NO activan ramas del ensayo de rostro.
+      if (data.cafe_tipo_fila === 'pausa') {
+        if (data.cafe_decision_bloque === 'finalizar') {
+          // Pedir a ExpBuilder una transicion no diferida al cierre. Su router
+          // actualiza el scope, aborta el bucle activo y conserva el checkpoint
+          // hasta que on_data_update confirma el guardado local.
+          window.ExpBuilderNavigation.requestBranch(data, {
+            targetId: 1794335934986,
+            usedDefault: false,
+            conditionId: 'cafe_fin_voluntario'
+          });
+        }
+        return;
+      }
+      if (data.cafe_tipo_fila === 'calibracion') return;
       const branchDecision = window.ExpBuilderBranching.decide(
         data, [1794335934986], [], 1794335934986
       );
@@ -155807,9 +155850,9 @@ window.ExpBuilderNavigation?.registerTrial(1794334990210, experiment_timeline);
     // Se eligen siempre las mismas tres imagenes de prueba para que la
     // recuperacion de sesion mantenga indices y estimulos estables.
     const CAFE_IMAGENES_PRUEBA = [
-      "img/surprise_M-LA-07.jpg",
-      "img/surprise_M-LA-08.jpg",
-      "img/surprise_M-LA-09.jpg"
+      "img/stimuli/surprise_M-LA-07.jpg",
+      "img/stimuli/surprise_M-LA-08.jpg",
+      "img/stimuli/surprise_M-LA-09.jpg"
     ];
     const cafeStimuliPrincipales = window.CAFE_MODO_PRUEBA === true
       ? CAFE_IMAGENES_PRUEBA.map(ruta => {
@@ -155826,18 +155869,31 @@ window.ExpBuilderNavigation?.registerTrial(1794334990210, experiment_timeline);
         })
       : test_stimuli_loop_1794335806908;
 
+    // CAFE v12: orden GLOBAL aleatorio una sola vez por sesion.
+    // La misma semilla de sesion reproduce el orden en cada reanudacion.
+    // Las calibraciones y las pausas son filas separadas, no rostros con 5 respuestas.
+    const cafeRows = window.CAFEBlocks.prepareRows(cafeStimuliPrincipales, trialSessionId, {
+      testMode: window.CAFE_MODO_PRUEBA === true,
+      blockSize: window.CAFE_MODO_PRUEBA === true
+        ? window.CAFE_TAMANO_BLOQUE_PRUEBA : window.CAFE_TAMANO_BLOQUE,
+      calibrationsPerWindow: window.CAFE_CALIBRACIONES_POR_100,
+      calibrationWindowSize: window.CAFE_VENTANA_CALIBRACION
+    });
+    experiment_timeline.data.cafe_bloque = jsPsych.timelineVariable('cafe_block');
+    experiment_timeline.data.cafe_posicion_global = jsPsych.timelineVariable('cafe_position');
+    experiment_timeline.data.cafe_tipo_fila = jsPsych.timelineVariable('cafe_kind');
     const loop_1794335806908_procedure = {
       timeline: [experiment_timeline],
-      timeline_variables: cafeStimuliPrincipales.length ? cafeStimuliPrincipales : [{}],
+      timeline_variables: cafeRows,
       get repetitions() {
     return window.ExpBuilderNavigation?.remainingLoopRepetitions("loop_1794335806908", 1) ?? 1;
   },
   randomize_order: false,
   sample: { type: 'custom', fn: function(indices) {
     if (window.ExpBuilderNavigation) {
-      return window.ExpBuilderNavigation.sampleLoop("loop_1794335806908", indices, true, false);
+      return window.ExpBuilderNavigation.sampleLoop("loop_1794335806908", indices, false, false);
     }
-    return jsPsych.randomization.shuffle(indices);
+    return indices;
   } },
       
 
@@ -155979,7 +156035,8 @@ data: {
   
 window.ExpBuilderNavigation?.registerTrial(1794335934986, Ending_procedure);
 
-    window.CAFENative.install(timeline); // CAFE v10: un único renderer responsive por ensayo.
+    window.CAFENative.install(timeline); // Renderizador nativo responsive original.
+    window.CAFEBlocks.install(timeline, jsPsych); // Dispatcher sin duplicar el rostro.
     window.ExpBuilderNavigation?.attach(jsPsych, timeline);
     jsPsych.run(timeline);
 

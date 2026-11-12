@@ -16,3 +16,6 @@
 .cafe-block-pause-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
 .cafe-block-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:450px){.cafe-calibration-options{grid-template-columns:1fr}.cafe-block-pause-actions .cafe-native-button{width:100%}.cafe-blocks .cafe-block-card{max-height:calc(100dvh - 20px);overflow:auto}.cafe-progress-meta{font-size:.88rem}}
+/* Cierre voluntario: opción secundaria solo en checkpoints cercanos a cada 200 caras. */
+#cafe-native-root .cafe-block-stop{background:#fff;color:#285265;border:1px solid #a7bbc4}
+#cafe-native-root .cafe-block-stop:hover{background:#f2f7f9;color:#1e4558}
