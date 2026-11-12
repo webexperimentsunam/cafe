@@ -1,3 +1,4 @@
+if (!window.CAFEAcceso?.invalid) {
 
 
   // --- FileUploadResponseComponent endpoint (Firebase Cloud Function) ---
@@ -1088,7 +1089,7 @@ const m9e = decideBranch;
     });
   }
 
-  function _showSuccess() {
+  function _showSuccess(receipt) {
     _hideLoading();
     _clearCompletedTrialVisuals();
     const overlay = document.createElement('div');
@@ -1108,6 +1109,61 @@ const m9e = decideBranch;
       <p style="margin:0;color:#111;font-size:18px;font-weight:600">Experiment complete. Thank you!</p>
       <p style="margin:0;color:#555;font-size:14px">You can now close this window.</p>
     `;
+    if (receipt) {
+      // El folio solo se muestra cuando apiDataComplete Y el estado final de
+      // Firebase se confirmaron. No se entrega una constancia por completar
+      // el formulario local sin guardado remoto.
+      overlay.style.padding = '18px';
+      overlay.style.boxSizing = 'border-box';
+      overlay.style.overflowY = 'auto';
+      overlay.style.background = '#edf3f5';
+      overlay.style.gap = '10px';
+      const heading = overlay.querySelector('p');
+      if (heading) heading.textContent = receipt.isTest
+        ? 'Prueba de constancia — no acredita puntos'
+        : 'Participación registrada';
+      const message = overlay.querySelectorAll('p')[1];
+      if (message) message.textContent = receipt.isTest
+        ? 'El modo de prueba no es válido para acreditar participación.'
+        : 'Conserva tu folio y entrégalo a tu profesor o profesora.';
+
+      const card = document.createElement('section');
+      card.style.cssText = 'box-sizing:border-box;width:min(100%,490px);padding:24px;background:#fff;border:1px solid #d9e4e9;border-radius:13px;text-align:center;color:#20343f;box-shadow:0 6px 24px #10304416;';
+      const label = document.createElement('p');
+      label.style.cssText = 'margin:0 0 10px;font-size:14px;';
+      label.textContent = receipt.courseLabel + ' · ' + receipt.validCount + ' rostros registrados';
+      const cap = document.createElement('p');
+      cap.style.cssText = 'margin:0 0 8px;font-size:13px;color:#506676;';
+      cap.textContent = receipt.isTest ? 'Folio de prueba (NO válido)' : 'Código final de participación';
+      const code = document.createElement('strong');
+      code.style.cssText = 'display:block;overflow-wrap:anywhere;font:700 clamp(16px,4vw,24px)/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.035em;margin:4px 0 16px;color:#17485a;';
+      code.textContent = receipt.code;
+      const copy = document.createElement('button');
+      copy.type = 'button';
+      copy.textContent = 'Copiar código';
+      copy.style.cssText = 'min-height:44px;padding:10px 20px;background:#286476;color:white;border:0;border-radius:8px;cursor:pointer;font-size:15px;';
+      copy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(receipt.code);
+          copy.textContent = 'Código copiado';
+        } catch (_) {
+          copy.textContent = 'Selecciona el código y cópialo manualmente';
+        }
+      });
+      const note = document.createElement('p');
+      note.style.cssText = 'font-size:12px;line-height:1.5;color:#617781;margin:15px 0 0;';
+      note.textContent = receipt.isTest
+        ? 'Este código contiene la marca PRUEBA y no debe entregarse como comprobante.'
+        : 'El mismo código está en el CSV final. La acreditación depende de que el profesor verifique los registros de este curso.';
+      card.append(label,cap,code,copy,note);
+      overlay.appendChild(card);
+    } else {
+      // El público general no ve códigos académicos.
+      const heading = overlay.querySelector('p');
+      if (heading) heading.textContent = '¡Gracias por participar!';
+      const message = overlay.querySelectorAll('p')[1];
+      if (message) message.textContent = 'Tus respuestas se registraron. Ya puedes cerrar esta ventana.';
+    }
     document.body.appendChild(overlay);
   }
 
@@ -1237,7 +1293,9 @@ const m9e = decideBranch;
       Number(window.CAFE_MODO_PRUEBA === true ? window.CAFE_TAMANO_BLOQUE_PRUEBA : window.CAFE_TAMANO_BLOQUE),
       Number(window.CAFE_VENTANA_CALIBRACION),
       Number(window.CAFE_CALIBRACIONES_POR_100)
-    ].join('-');
+    ].join('-') + (window.CAFEAcceso?.modalidad==='estudiante'
+      ? `-estudiante-${window.CAFEAcceso.curso}-${window.CAFEAcceso.metaDocente}`
+      : '');
     let isFreshChoice = false;
     if (isResuming) {
       const decision = await _cafeChooseResume();
@@ -1648,6 +1706,11 @@ const m9e = decideBranch;
         data.session_started_at = metadata.startedAt;
         // Permite distinguir los registros de prueba de la recoleccion real.
         data.cafe_modo_prueba = window.CAFE_MODO_PRUEBA === true;
+        // Solo etiqueta de cohorte: nunca nombres, matrículas ni claves personales.
+        // No es una constancia ni demuestra que el servidor acreditó puntos.
+        data.cafe_modalidad = window.CAFEAcceso?.modalidad || 'publico';
+        data.cafe_curso = window.CAFEAcceso?.curso || '';
+        data.cafe_meta_docente = window.CAFEAcceso?.metaDocente ?? null;
         data.sessionId = trialSessionId;
         data.experimentID = "17e49b08-828f-4321-b62d-c040a5c1c3ea";
         if (data.builder_id !== undefined && data.builder_id !== null) {
@@ -1721,9 +1784,10 @@ const m9e = decideBranch;
           );
           return;
         }
-        _showLoading('Saving your data…');
+        _showLoading('Guardando tus respuestas…');
         await new Promise(r => setTimeout(r, 0));
-        
+        let cafeConstanciaPreparada = null;
+
         try {
           // jsPsych no espera automaticamente el on_data_update asincrono.
           // Esta barrera evita finalizar antes de que se guarde el ultimo survey.
@@ -1736,9 +1800,24 @@ const m9e = decideBranch;
               throw new Error('Todavia hay respuestas sin confirmacion del servidor');
             }
             _setLoadingMsg('Confirmando el archivo completo en Drive…');
-            // apiDataComplete actualiza el CSV final sin cambiar el formato
-            // de los ensayos. No descartar IndexedDB hasta la confirmacion.
-            await sendCompleteExperiment(allTrials.map(({id,timestamp,createdAt,remoteAck,ackAt,...trial}) => trial));
+            // El folio de estudiante se escribe en la fila de FINALIZACIÓN
+            // dentro de la exportación consolidada, nunca en la pantalla
+            // de checkpoint ni antes de que el servidor confirme el CSV.
+            const trialsFinales = allTrials.map(({id,timestamp,createdAt,remoteAck,ackAt,...trial}) => trial);
+            if (window.CAFEAcceso?.modalidad === 'estudiante') {
+              if (!window.CAFEConstancias?.prepareForExport) {
+                throw new Error('No se cargó el módulo de constancias de CAFE.');
+              }
+              cafeConstanciaPreparada = window.CAFEConstancias.prepareForExport(trialsFinales, {
+                sessionId:trialSessionId,
+                access:window.CAFEAcceso,
+                testMode:window.CAFE_MODO_PRUEBA === true,
+                totalFaces:window.CAFEBlocksDiagnostics?.totalFaces || 1192
+              });
+            }
+            // apiDataComplete actualiza el CSV final sin modificar los ensayos
+            // originales. No descartar IndexedDB hasta la confirmación.
+            await sendCompleteExperiment(trialsFinales);
           }
         } catch (error) {
           console.error('CAFE: no se pudo finalizar el guardado', error);
@@ -1782,7 +1861,7 @@ const m9e = decideBranch;
         // --- Recruitment platform redirect ---
         
         
-        _showSuccess();
+        _showSuccess(cafeConstanciaPreparada);
       }
     });
     // __INIT_JSPSYCH_END__
@@ -156042,3 +156121,5 @@ window.ExpBuilderNavigation?.registerTrial(1794335934986, Ending_procedure);
     jsPsych.run(timeline);
 
 })();
+
+}
