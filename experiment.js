@@ -1319,8 +1319,9 @@ const m9e = decideBranch;
     // If session name has counter token, generate final name now that participantNumber is known
     if (_sessionNameHasDynamic() && typeof participantNumber === 'number' && !isNaN(participantNumber)) {
       const _finalName = _generateSessionName(participantNumber);
-      if (_finalName && !isResuming) {
-        // Conservar el nombre original si el participante reanuda dias despues.
+      if (_finalName && !isResuming && window.CAFE_HABILITAR_RENOMBRADO_SESION === true) {
+        // La operación opcional updateSessionName devuelve HTTP 401 en este backend.
+        // No se llama por defecto; el guardado incremental no depende de renombrar.
         _updateSessionName(trialSessionId, _finalName);
       }
     }
@@ -1801,7 +1802,7 @@ const timeline = [];
 
     const globalPreload = {
       type: jsPsychPreload,
-      images: ["img/feliz.png","img/logos.svg","img/soprendida.png","img/stimuli/surprise_M-LA-07.jpg","img/stimuli/surprise_M-LA-08.jpg","img/stimuli/surprise_M-LA-09.jpg","img/surprise_M-LA-10.jpg","img/triste.png"],
+      images: ["img/feliz.png","img/logos.svg","img/sorprendida.png","img/stimuli/surprise_M-LA-07.jpg","img/stimuli/surprise_M-LA-08.jpg","img/stimuli/surprise_M-LA-09.jpg","img/stimuli/surprise_M-LA-10.jpg","img/triste.png"],
       audio: [],
       video: []
     };
@@ -155572,7 +155573,7 @@ window.ExpBuilderNavigation?.registerTrial(1794334785465, preparation_procedure)
         "width": 20,
         "height": 20,
         "zIndex": 2,
-        "stimulus": "img/surprise_M-LA-10.jpg",
+        "stimulus": "img/stimuli/surprise_M-LA-10.jpg",
         "name": "ImageComponent_1"
       }
     ],

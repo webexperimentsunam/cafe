@@ -165,6 +165,8 @@
   // true  = prueba corta: 3 imagenes principales + practica original.
   // false = experimento completo: todos los estimulos originales.
   window.CAFE_MODO_PRUEBA = true;
+  // La API rechaza el renombrado opcional con HTTP 401; se omite por defecto.
+  window.CAFE_HABILITAR_RENOMBRADO_SESION = false;
   // En producción: 200. En modo prueba: 2, para verificar la pausa con 3 rostros.
   window.CAFE_TAMANO_BLOQUE = 200;
   window.CAFE_TAMANO_BLOQUE_PRUEBA = 2;
@@ -178,4 +180,4 @@
 <script src="./cafe-nativo.js?v=11.1"></script>
 <link rel="stylesheet" href="./cafe-bloques.css?v=13.3">
 <script src="./cafe-bloques.js?v=13.3"></script>
-<script id="generated-script" src="./experiment.js?v=13.3"></script></body></html>
+<script id="generated-script" src="./experiment.js?v=13.4"></script></body></html>
