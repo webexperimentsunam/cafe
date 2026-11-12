@@ -160,30 +160,8 @@
   emit("runtime-ready", { version: api.version });
   return api;
 })(window, document);
-</script><!-- CONFIGURACION CAFE: cambia true por false para ejecutar la tarea completa. -->
-<script id="cafe-configuracion">
-  // true  = prueba corta: 3 imagenes principales + practica original.
-  // false = experimento completo: todos los estimulos originales.
-  window.CAFE_MODO_PRUEBA = true;
-  // La API rechaza el renombrado opcional con HTTP 401; se omite por defecto.
-  window.CAFE_HABILITAR_RENOMBRADO_SESION = false;
-  // En producción: 200. En modo prueba: 2, para verificar la pausa con 3 rostros.
-  window.CAFE_TAMANO_BLOQUE = 200;
-  window.CAFE_TAMANO_BLOQUE_PRUEBA = 2;
-  // Cuatro calibraciones por cada 100 rostros, independientes del tamaño del checkpoint.
-  window.CAFE_CALIBRACIONES_POR_100 = 4;
-  window.CAFE_VENTANA_CALIBRACION = 100;
-  // Catálogo de cursos: sustituir los ejemplos por los cursos reales aprobados.
-  // Cada curso tiene una meta propia, distinta de la frecuencia de checkpoints.
-  // Las metas solo determinan cuándo mostrar Finalizar; NO acreditan puntos.
-  window.CAFE_CURSOS = {
-    'grupo-80':  { meta: 80,  etiqueta: 'Grupo A (ejemplo)' },
-    'grupo-150': { meta: 150, etiqueta: 'Grupo B (ejemplo)' },
-    'grupo-300': { meta: 300, etiqueta: 'Grupo C (ejemplo)' }
-  };
-  // Las calibraciones se distribuyen a lo largo de ventanas de 100 rostros,
-  // independientemente del tamaño del checkpoint configurado arriba.
-</script>
+</script><!-- CONFIGURACION CAFE: para editar grupos, metas y modo de prueba, abre cafe-config.js. -->
+<script id="cafe-configuracion" src="./cafe-config.js?v=13.7"></script>
 <link rel="stylesheet" href="./cafe-nativo.css?v=11">
 <script src="./cafe-nativo.js?v=11.1"></script>
 <link rel="stylesheet" href="./cafe-bloques.css?v=13.5">
