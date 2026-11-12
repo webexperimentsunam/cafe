@@ -1,9 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Enojo">
-  <rect width="256" height="256" rx="28" fill="#fff0ea"/>
-  <circle cx="128" cy="128" r="92" fill="#ffd84d" stroke="#e2b62e" stroke-width="8"/>
-  <circle cx="98" cy="116" r="9" fill="#2d2d2d"/>
-  <circle cx="158" cy="116" r="9" fill="#2d2d2d"/>
-  <path d="M80 88c14 0 28 6 38 16" fill="none" stroke="#2d2d2d" stroke-width="9" stroke-linecap="round"/>
-  <path d="M176 88c-14 0-28 6-38 16" fill="none" stroke="#2d2d2d" stroke-width="9" stroke-linecap="round"/>
-  <path d="M90 178c12-12 25-18 38-18s26 6 38 18" fill="none" stroke="#2d2d2d" stroke-width="10" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Emoticono de enojo"><title>Enojo</title><circle cx="100" cy="100" r="88" fill="#FFD65A" stroke="#292929" stroke-width="7"/><path d="M49 69 L82 84 M151 69 L118 84" stroke="#292929" stroke-width="9" stroke-linecap="round"/><path d="M55 103 Q69 95 83 103 M117 103 Q131 95 145 103" stroke="#292929" stroke-width="8" stroke-linecap="round" fill="none"/><circle cx="70" cy="106" r="5" fill="#292929"/><circle cx="130" cy="106" r="5" fill="#292929"/><path d="M75 150 Q100 141 125 150" fill="none" stroke="#292929" stroke-width="9" stroke-linecap="round"/></svg>

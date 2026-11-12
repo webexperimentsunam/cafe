@@ -1,9 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Alegría">
-  <rect width="256" height="256" rx="28" fill="#fff7d6"/>
-  <circle cx="128" cy="128" r="92" fill="#ffd84d" stroke="#e2b62e" stroke-width="8"/>
-  <circle cx="95" cy="104" r="10" fill="#2d2d2d"/>
-  <circle cx="161" cy="104" r="10" fill="#2d2d2d"/>
-  <path d="M82 148c12 24 29 36 46 36s34-12 46-36" fill="none" stroke="#2d2d2d" stroke-width="10" stroke-linecap="round"/>
-  <path d="M80 82c8-10 18-15 30-16" fill="none" stroke="#2d2d2d" stroke-width="8" stroke-linecap="round"/>
-  <path d="M176 82c-8-10-18-15-30-16" fill="none" stroke="#2d2d2d" stroke-width="8" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1254" height="1254" viewBox="0 0 1254 1254">
+<title>Alegría</title>
+<circle cx="627" cy="627" r="548" fill="#F7D355" stroke="#1F232B" stroke-width="27"/>
+<path d="M302 389 Q412 278 517 364" stroke="#1F232B" stroke-width="38" stroke-linecap="round" fill="none"/>
+<path d="M737 364 Q842 278 952 389" stroke="#1F232B" stroke-width="38" stroke-linecap="round" fill="none"/>
+<ellipse cx="443" cy="552" rx="50" ry="82" fill="#1F232B"/>
+<ellipse cx="811" cy="552" rx="50" ry="82" fill="#1F232B"/>
+<path d="M363 727 Q627 850 891 727 C917 714 912 763 896 821 C864 942 757 1010 627 1010 C497 1010 390 942 358 821 C342 763 337 714 363 727 Z" fill="#1F232B"/>
+<path d="M392 773 Q627 862 862 773 Q854 834 810 863 Q627 923 444 863 Q400 834 392 773 Z" fill="#FFFFFF"/>
+<path d="M419 857 Q627 940 835 857 C796 946 726 983 627 983 C528 983 458 946 419 857 Z" fill="#72283F"/>
 </svg>

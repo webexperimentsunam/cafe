@@ -1,11 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Miedo">
-  <rect width="256" height="256" rx="28" fill="#f0efff"/>
-  <circle cx="128" cy="128" r="92" fill="#ffd84d" stroke="#e2b62e" stroke-width="8"/>
-  <ellipse cx="96" cy="108" rx="13" ry="16" fill="#fff" stroke="#2d2d2d" stroke-width="5"/>
-  <ellipse cx="160" cy="108" rx="13" ry="16" fill="#fff" stroke="#2d2d2d" stroke-width="5"/>
-  <circle cx="96" cy="111" r="5" fill="#2d2d2d"/>
-  <circle cx="160" cy="111" r="5" fill="#2d2d2d"/>
-  <path d="M82 86c9-10 19-15 30-16" fill="none" stroke="#2d2d2d" stroke-width="8" stroke-linecap="round"/>
-  <path d="M174 86c-9-10-19-15-30-16" fill="none" stroke="#2d2d2d" stroke-width="8" stroke-linecap="round"/>
-  <ellipse cx="128" cy="168" rx="18" ry="24" fill="#fff" stroke="#2d2d2d" stroke-width="8"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1254" height="1254" viewBox="0 0 1254 1254" fill="none">
+  <title>Emoticono de miedo</title>
+  <desc>Emoji circular amarillo con expresión de miedo, cejas levantadas, ojos muy abiertos y boca tensa abierta.</desc>
+
+  <!-- Face -->
+  <circle cx="627" cy="627" r="548" fill="#F7D355" stroke="#1F232B" stroke-width="26"/>
+
+  <!-- Eyebrows -->
+  <path d="M330 390 C 405 370, 455 325, 505 275" stroke="#1F232B" stroke-width="38" stroke-linecap="round" fill="none"/>
+  <path d="M924 390 C 849 370, 799 325, 749 275" stroke="#1F232B" stroke-width="38" stroke-linecap="round" fill="none"/>
+
+  <!-- Eyes -->
+  <ellipse cx="438" cy="611" rx="95" ry="140" fill="#FFFFFF" stroke="#1F232B" stroke-width="22"/>
+  <ellipse cx="816" cy="611" rx="95" ry="140" fill="#FFFFFF" stroke="#1F232B" stroke-width="22"/>
+  <ellipse cx="438" cy="611" rx="33" ry="40" fill="#1F232B"/>
+  <ellipse cx="816" cy="611" rx="33" ry="40" fill="#1F232B"/>
+
+  <!-- Mouth outer -->
+  <path d="M412 864
+           C 432 807, 482 774, 545 776
+           C 575 777, 601 787, 627 787
+           C 653 787, 679 777, 709 776
+           C 772 774, 822 807, 842 864
+           L 842 927
+           C 822 968, 770 982, 710 981
+           C 678 980, 650 972, 627 972
+           C 604 972, 576 980, 544 981
+           C 484 982, 432 968, 412 927 Z"
+        fill="#FFFFFF" stroke="#1F232B" stroke-width="22" stroke-linejoin="round"/>
+
+  <!-- Mouth inner fear shadow -->
+  <path d="M442 882
+           C 492 850, 563 840, 627 840
+           C 691 840, 762 850, 812 882
+           C 803 923, 766 949, 711 952
+           C 678 954, 649 948, 627 948
+           C 605 948, 576 954, 543 952
+           C 488 949, 451 923, 442 882 Z"
+        fill="#6A1F36" opacity="0.9"/>
 </svg>
