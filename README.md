@@ -1,56 +1,54 @@
-# CAFE v13.7 — Configuración independiente
+# CAFE v13.7.1 — Corregir finalización académica por curso
 
-Esta versión extrae todas las opciones editables de `index.html` a **`cafe-config.js`**. La lógica experimental, el reconocimiento, las calibraciones y las constancias son idénticos a la v13.6.1.
+## Contexto
 
-## Instalación desde CAFE v13.6 / v13.6.1
+En una sesión que entra mediante `?modalidad=estudiante&curso=grupo-50`, la consola reconoce correctamente `modalidad: estudiante`, `curso: grupo-50` y `meta: 50`, pero la pantalla de checkpoint no ofrece "Finalizar mi participación". La variable diagnóstica `CAFEBlocksDiagnostics.metaEfectiva` apareció como `undefined` en la captura. Eso puede indicar una versión anterior de `cafe-bloques.js` o una consulta hecha antes de que se preparen los ensayos; por sí solo no demuestra cuál fue el caso.
 
-1. Haz una copia de seguridad del `index.html` **actualmente publicado**, especialmente si ya agregaste grupos o metas.
-2. Descarga el parche y sube **estos dos archivos a la raíz** del repositorio `cafe` (la misma carpeta donde está `experiment.js`):
-   - `index.html` (modificado una sola vez para usar el archivo externo)
-   - `cafe-config.js` (nuevo)
-3. Si tus cursos, tamaños de bloque o parámetros actuales no coinciden con los ejemplos, **copia tus valores actuales** al nuevo `cafe-config.js` antes de publicarlo.
-4. Espera a que GitHub Pages se actualice. Comprueba en `https://webexperimentsunam.github.io/cafe/cafe-config.js` que aparece el código JavaScript, sin error 404.
-5. Recarga el experimento con `Ctrl + Shift + R` y prueba el enlace público y al menos un enlace de estudiante.
+## Qué cambia
 
-Después de la instalación, para modificar grupos, metas, checkpoints o calibraciones, **edita únicamente `cafe-config.js`**. No hay necesidad de editar otra vez el HTML ni la lógica del experimento.
+- `index.html` ahora solicita `cafe-bloques.js?v=13.7.1`, para no reutilizar una copia anterior en caché.
+- `cafe-bloques.js` informa versión `13.7.1` y **lee la modalidad y meta directamente de `window.CAFEAcceso` al dibujar un checkpoint**, no solo de un campo de diagnóstico.
+- Un estudiante con meta de 50 podrá pulsar **Finalizar mi participación** al llegar a 50 y también en los checkpoints siguientes (100, 150, ...), siempre que ya haya alcanzado su meta. Antes de la meta, los checkpoints siguen mostrando solo "Continuar".
+- El público general conserva las decisiones de finalizar únicamente en los hitos habilitados de 200 rostros.
+- No se modifica ninguna pregunta, rostro, calibración, sistema de guardado, código de constancia ni grupo.
 
-## Variables editables
+## Instalación — IMPORTANTE
 
-| Variable | Función | Valor incluido |
-|---|---|---|
-| `CAFE_MODO_PRUEBA` | `true` = 3 rostros; `false` = 1,192 | `true` |
-| `CAFE_TAMANO_BLOQUE` | Frecuencia de checkpoints en la versión real | `200` |
-| `CAFE_TAMANO_BLOQUE_PRUEBA` | Checkpoint de prueba | `2` |
-| `CAFE_CALIBRACIONES_POR_100` | Calibraciones por ventana | `4` |
-| `CAFE_VENTANA_CALIBRACION` | Tamaño de la ventana de calibración | `100` |
-| `CAFE_CURSOS` | Claves de curso y metas en número de rostros | 3 ejemplos |
-| `CAFE_HABILITAR_RENOMBRADO_SESION` | Solicitud remota opcional que devolvía 401 | `false` |
+Subir a la **raíz de GitHub** estos dos archivos del parche:
+1. `index.html` (sustituye el anterior)
+2. `cafe-bloques.js` (sustituye el anterior)
 
-**Para producción:** cambia `window.CAFE_MODO_PRUEBA = false;` dentro de `cafe-config.js` (y establece las metas reales). El paquete mantiene `true` como el `index.html` original de v13.6 para no activar producción accidentalmente.
+**NO reemplazar `cafe-config.js`:** se conservan tus ajustes reales de grupo-50 y 50 rostros, checkpoints de 50, modo real y calibraciones.
 
-### Grupos de profesores
+Es importante sustituir ambos archivos. Después, actualizar en el navegador con Ctrl+Shift+R.
 
-Por ejemplo:
+## Diagnóstico en consola
+
+En cualquier pantalla, ejecutar:
 
 ```javascript
-window.CAFE_CURSOS = {
-  'profesora-garcia': { meta: 100, etiqueta: 'Psicología A' },
-  'profesor-lopez': { meta: 250, etiqueta: 'Investigación B' }
-};
+console.table({
+  versionBloques: window.CAFEBlocksDiagnostics?.version,
+  modalidad: window.CAFEAcceso?.modalidad,
+  curso: window.CAFEAcceso?.curso,
+  metaDocente: window.CAFEAcceso?.metaDocente,
+  metaEfectiva: window.CAFEBlocksDiagnostics?.metaEfectiva,
+  rostrosPreparados: window.CAFEBlocksDiagnostics?.totalFaces
+});
 ```
 
-El enlace de estudiantes usa la **clave**, no la etiqueta:
+La versión debe ser **13.7.1**. Antes de iniciar el bucle experimental, `metaEfectiva` puede estar todavía indefinida. En una pantalla de reconocimiento o checkpoint debe ser **50** para `grupo-50`.
 
-`https://webexperimentsunam.github.io/cafe/?modalidad=estudiante&curso=profesora-garcia`
+En el checkpoint de las 50, deben mostrarse los botones "Continuar" y "Finalizar mi participación". Si el participante ya siguió avanzando, el siguiente checkpoint también debe mostrar los dos botones.
 
-El enlace del público general no cambia: `https://webexperimentsunam.github.io/cafe/`.
+**La constancia aparece después de elegir finalizar y completar el cierre remoto**, no al alcanzar por sí sola la meta.
 
-## Nota sobre sesiones existentes
+## Pruebas realizadas
 
-No cambies las metas, el tamaño de bloque ni el modo de prueba en mitad de la participación de un grupo. La recuperación depende de la configuración de la sesión. Mantén las opciones estables durante la recolección; haz pruebas en un navegador independiente al que utiliza el público.
+- Comprobación `node --check`.
+- Ejecución simulada de 1,192 rostros y 48 calibraciones.
+- Render de checkpoint en la posición 50 con los dos botones.
+- Render de checkpoint en la posición 100 después de superar una meta de 50, también con los dos botones.
+- Pulsación simulada de finalizar, verificando los campos `cafe_decision_bloque: 'finalizar'` y `cafe_meta_docente: 50`.
 
-El cambio a `cafe-config.js` no corrige ni modifica el guardado remoto. El código de constancia sigue requiriendo que el servicio confirme la sesión y que el folio coincida con el CSV.
-
-## Comprobaciones
-
-Se comparó por ejecución JavaScript el nuevo `cafe-config.js` con el bloque de configuración original de v13.6: **todos los valores y cursos son idénticos**. Se comprobó que `index.html` carga la configuración **antes** de `cafe-acceso.js` y `experiment.js`, y que el paquete completo incluye `cafe-acceso.js`, que faltó en un parche anterior. No se realizaron pruebas de integración contra el GitHub Pages en vivo ni contra la API de guardado.
+Queda pendiente la prueba integral de GitHub Pages, jsPsych y exportación CSV/Drive para esta revisión.

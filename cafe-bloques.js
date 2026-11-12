@@ -1,4 +1,4 @@
-/* CAFE v13.3 — checkpoints, 4 calibraciones por 100 y progreso global.
+/* CAFE v13.7.1 — checkpoints, 4 calibraciones por 100 y progreso global.
    Mantiene el renderizador nativo y la aleatorización estable por sesión. */
 (function (win, doc) {
   'use strict';
@@ -10,7 +10,7 @@
     {image:'img/calibracion_miedo.svg', emotion:'Miedo'},
     {image:'img/calibracion_sorpresa.svg', emotion:'Sorpresa'}
   ]);
-  const diag={version:'13.3', totalFaces:0, checkpointSize:200, blocks:0, checks:0,
+  const diag={version:'13.7.1', totalFaces:0, checkpointSize:200, blocks:0, checks:0,
     positions:[], orderedImages:[], currentKind:null, currentBlock:null, selectedStop:false,
     calibrationWindow:100};
   win.CAFEBlocksDiagnostics=diag;
@@ -80,7 +80,15 @@
     if (!Array.isArray(stimuli)||!stimuli.length)throw Error('CAFE v13.3: no hay rostros principales');
     if (!sessionId)throw Error('CAFE v13.3: falta sessionId para preservar la aleatorización');
     const checkpointSize=Number(config.blockSize ?? (config.testMode?2:200));
-    if(!Number.isInteger(checkpointSize)||checkpointSize<1||checkpointSize>200)throw Error('CAFE v13.3: tamaño de bloque inválido');
+    if(!Number.isInteger(checkpointSize)||checkpointSize<1||checkpointSize>200)throw Error('CAFE v13.5: tamaño de bloque inválido');
+    const acceso=win.CAFEAcceso||{modalidad:'publico',curso:'',metaDocente:null};
+    // El requisito por curso es independiente de la frecuencia de los checkpoints.
+    // En modo prueba se simula el objetivo en 2 rostros; no se generan créditos.
+    const student=acceso.modalidad==='estudiante';
+    const metaReal=student?Number(acceso.metaDocente):null;
+    const metaEfectiva=student?(config.testMode?Math.min(2,stimuli.length):metaReal):200;
+    if(student&&(!Number.isInteger(metaReal)||metaReal<1||metaReal>1192))
+      throw Error('CAFE v13.5: meta del curso inválida');
     const random=rng(sessionId+'|CAFE-v13.3-order');
     const ordered=shuffle(stimuli,random);
     if(new Set(ordered.map(x=>x.cafe_stimulus)).size!==ordered.length)
@@ -106,8 +114,14 @@
           cafe_stimulus:check.cafe_calibration_image
         });
       }
-      if(count<ordered.length && count%checkpointSize===0){
+      // Checkpoint de curso siempre exactamente en la meta, incluso si ésta
+      // no coincide con un múltiplo del bloque general (p. ej. 75 vs. 200).
+      const metaCheckpoint=student&&count===metaEfectiva;
+      const regularCheckpoint=count%checkpointSize===0;
+      if(count<ordered.length && (regularCheckpoint||metaCheckpoint)){
         rows.push({cafe_kind:'pausa', cafe_block:block, cafe_position:count,
+          cafe_meta_alcanzada:student && count>=metaEfectiva,
+          cafe_checkpoint_meta:metaCheckpoint,
           components_experiment:[], response_components_experiment:[], cafe_stimulus:'',
           cafe_next_count:Math.min(checkpointSize, ordered.length-count)});
       }
@@ -115,6 +129,10 @@
 
     diag.totalFaces=ordered.length;
     diag.testMode=Boolean(config.testMode);
+    diag.modalidad=acceso.modalidad;
+    diag.curso=student?acceso.curso:'';
+    diag.metaDocente=student?metaReal:null;
+    diag.metaEfectiva=metaEfectiva;
     diag.checkpointSize=checkpointSize;
     diag.blocks=Math.ceil(ordered.length/checkpointSize);
     diag.checks=rows.filter(r=>r.cafe_kind==='calibracion').length;
@@ -174,10 +192,11 @@
     const faceTrial=experimentTrial.type;
     const session=String(diag.sessionId);
     class CafeBlockTrial {
-      static info={name:'cafe-blocks',version:'13.3',parameters:{},data:{
+      static info={name:'cafe-blocks',version:'13.7.1',parameters:{},data:{
         rt:{type:'INT'},cafe_tipo_fila:{type:'STRING'},cafe_bloque:{type:'INT'},
         cafe_calibracion_respuesta:{type:'STRING'},cafe_calibracion_correcta:{type:'BOOL'},
-        cafe_decision_bloque:{type:'STRING'}}};
+        cafe_decision_bloque:{type:'STRING'},cafe_meta_alcanzada:{type:'BOOL'},
+        cafe_modalidad:{type:'STRING'},cafe_curso:{type:'STRING'},cafe_meta_docente:{type:'INT'}}};
       constructor(jsp){this.jsPsych=jsp;}
       trial(display){
         const kind=this.jsPsych.evaluateTimelineVariable('cafe_kind');
@@ -215,16 +234,49 @@
         }
         if(kind==='pausa'){
           const next=this.jsPsych.evaluateTimelineVariable('cafe_next_count');
-          const isTest=diag.testMode===true;
-          // Una opción de cierre discreta solo al alcanzar la meta de 200,
-          // o al cruzar ese umbral cuando el checkpoint no es divisor de 200.
-          // En modo de prueba se presenta para verificar ambas rutas.
-          const offerStop=isTest || (position>=200 &&
-            Math.floor(position/200)>Math.floor((position-diag.checkpointSize)/200));
+          // La modalidad y la meta se consultan directamente del acceso activo.
+          // Esto evita que una propiedad de diagnostico obsoleta o una sesion
+          // recuperada suprima el boton de finalizacion del curso.
+          const access=win.CAFEAcceso||{};
+          const student=access.modalidad==='estudiante';
+          const isTest=win.CAFE_MODO_PRUEBA===true;
+          const requestedMeta=Number(access.metaDocente);
+          const metaEfectiva=student
+            ? (isTest ? Math.min(2,diag.totalFaces||2) : requestedMeta) : 200;
+          if(student && (!Number.isInteger(metaEfectiva)||metaEfectiva<1))
+            throw Error('CAFE: la meta academica no esta disponible en el punto de control');
+          // Explicitar la meta tambien en las herramientas de diagnostico.
+          diag.modalidad=student?'estudiante':'publico';
+          diag.curso=student?String(access.curso||''):'';
+          diag.metaDocente=student?requestedMeta:null;
+          diag.metaEfectiva=metaEfectiva;
+          const eligible=position>=metaEfectiva;
+          // La finalizacion se ofrece al alcanzar la meta y en cualquier
+          // checkpoint posterior para no retener a quien ya la cumplio.
+          // El publico general solo recibe la opcion en hitos de 200.
+          const majorMilestone=position>=200 &&
+            Math.floor(position/200)>Math.floor((position-diag.checkpointSize)/200);
+          const offerStop=isTest || (eligible && (student || majorMilestone));
           const card=renderCard(display,'Punto de control',
             `Has completado ${position} de ${diag.totalFaces} evaluaciones`,position,diag.totalFaces);
-          card.append(create('p','cafe-block-help',
-            'Has llegado a un punto de control. Puedes continuar con el siguiente grupo de imágenes.'));
+          if(student){
+            const course=win.CAFEAcceso?.etiquetaCurso||diag.curso;
+            card.append(create('p','cafe-block-help',
+              `${course}. Requisito del curso: ${requestedMeta} rostros.`));
+            if(isTest){
+              card.append(create('p','cafe-block-note',
+                'Modo de prueba: este punto de control no acredita participación.'));
+            }else if(eligible){
+              card.append(create('p','cafe-block-help',
+                'Has alcanzado la cantidad indicada por tu profesor o profesora. Puedes continuar evaluando o finalizar tu participación. La acreditación requiere la verificación posterior de los registros recibidos.'));
+            }else{
+              card.append(create('p','cafe-block-help',
+                'Has llegado a un punto de control. Continúa hasta alcanzar el requisito de tu curso.'));
+            }
+          }else{
+            card.append(create('p','cafe-block-help',
+              'Has llegado a un punto de control. Puedes continuar con el siguiente grupo de imágenes.'));
+          }
           const footer=create('footer','cafe-native-footer cafe-block-pause-actions');
           const cont=create('button','cafe-native-button','Continuar');cont.type='button';
           footer.append(cont);
@@ -239,7 +291,9 @@
             if(done)return;done=true;cont.disabled=true;if(stop)stop.disabled=true;
             diag.selectedStop=decision==='finalizar';
             jsPsych.finishTrial({rt:Math.round(performance.now()-started),cafe_tipo_fila:'pausa',
-              cafe_decision_bloque:decision,cafe_bloque:block,cafe_posicion_global:position});
+              cafe_decision_bloque:decision,cafe_bloque:block,cafe_posicion_global:position,
+              cafe_meta_alcanzada:eligible,cafe_modalidad:diag.modalidad,
+              cafe_curso:student?String(access.curso||''):'',cafe_meta_docente:student?requestedMeta:null});
           }
           cont.addEventListener('click',()=>finish('continuar'));
           if(stop)stop.addEventListener('click',()=>finish('finalizar'));
