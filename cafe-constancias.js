@@ -1,4 +1,4 @@
-/* CAFE v13.6 — folio final de participación por curso.
+/* CAFE v14.0 — folio final de participación por curso.
    Un código identifica una sesión, pero la acreditación SIEMPRE depende
    de comprobar en el CSV exportado la cantidad de rostros registrados.
    El código se muestra únicamente cuando el guardado remoto final es confirmado.
@@ -6,7 +6,7 @@
 (function (win) {
   'use strict';
   const EXPERIMENT = '17e49b08-828f-4321-b62d-c040a5c1c3ea';
-  const BASE = 'expbuilder:public:' + EXPERIMENT + ':folio:v1:';
+  const BASE = 'expbuilder:public:' + EXPERIMENT + ':cafe-v14:folio:v1:';
   const EMOTIONS = new Set(['Alegría','Tristeza','Enojo','Miedo','Asco','Sorpresa','Neutral']);
   const REQUIRED = ['question1','question2','question3','question4','question5'];
   const CODE_RE = /^(?:CAFE|PRUEBA)-[A-HJ-NP-Z2-9]{4}(?:-[A-HJ-NP-Z2-9]{4}){3}$/;
@@ -61,47 +61,43 @@
     return unique.size;
   }
 
-  function prepareForExport(trials, opts) {
-    const access = opts.access || {};
-    if (access.modalidad !== 'estudiante') return null;
-    if (!Array.isArray(trials) || !opts.sessionId) throw new Error('Faltan datos para la constancia.');
+  function advanceAudit(previous, row) {
+    const audit = previous || { faces: [], calibrations: 0, ended: false, receipt: null };
+    const faces = new Set(audit.faces || []);
+    if (validFace(row)) faces.add(row.cafe_imagen || row.ImageComponent_1_stimulus);
+    const next = { ...audit, faces: [...faces], calibrations: (audit.calibrations || 0) + (row.cafe_tipo_fila === 'calibracion' ? 1 : 0) };
+    if (row.trial_name === 'Ending') {
+      next.ended = true;
+      next.receipt = row.cafe_codigo_constancia ? {
+        code: row.cafe_codigo_constancia, course: row.cafe_constancia_curso,
+        courseLabel: row.cafe_etiqueta_curso || row.cafe_constancia_curso,
+        meta: row.cafe_constancia_meta, validCount: row.cafe_constancia_rostros_validos,
+        calibrationCount: row.cafe_constancia_calibraciones, isTest: row.cafe_constancia_prueba
+      } : null;
+    }
+    return next;
+  }
+  function prepareEnding(row, audit, opts) {
+    if (row.trial_name !== 'Ending' || opts.access?.modalidad !== 'estudiante') return null;
+    const access = opts.access;
     const isTest = opts.testMode === true;
     const course = String(access.curso || '');
     const meta = Number(access.metaDocente);
-    if (!course || !Number.isInteger(meta) || meta < 1 || meta > 1192)
-      throw new Error('La configuración del curso no es válida.');
-
-    const validCount = countFaceResponses(trials);
-    // En modo de prueba el requisito se simula con dos rostros. El folio PRUEBA
-    // nunca acredita puntos y está marcado de forma explícita en el CSV.
+    const validCount = new Set(audit?.faces || []).size;
+    const calibrationCount = audit?.calibrations || 0;
     const needed = isTest ? Math.min(2, opts.totalFaces || 3) : meta;
-    if (validCount < needed)
-      throw new Error(`Aún faltan respuestas válidas para concluir: ${validCount} de ${needed}.`);
-
-    const finalRow = [...trials].reverse().find(row => row.trial_name === 'Ending');
-    if (!finalRow) throw new Error('Falta el registro de finalización para emitir el folio.');
+    Object.assign(row, { cafe_constancia_curso: course, cafe_constancia_meta: meta,
+      cafe_constancia_rostros_validos: validCount, cafe_constancia_calibraciones: calibrationCount,
+      cafe_constancia_prueba: isTest, cafe_constancia_elegible: false });
+    // Never block storage of answers just because academic eligibility is not met.
+    if (!opts.sessionId || !course || !Number.isInteger(meta) || meta < 1 || meta > 1192 || validCount < needed) return null;
     const code = getOrCreate(String(opts.sessionId), course, isTest);
-    const calibrationCount = trials.filter(row => row.cafe_tipo_fila === 'calibracion').length;
-    const receipt = Object.freeze({
-      code, course, courseLabel: String(access.etiquetaCurso || course), meta,
-      validCount, calibrationCount, isTest
-    });
-    // Los campos viven en la fila Ending del CSV FINAL; no se agrega un ensayo
-    // ficticio ni se altera el total de rostros reales. Si la exportación falla,
-    // la constancia NO se muestra aunque exista el código local provisional.
-    Object.assign(finalRow, {
-      cafe_codigo_constancia:code,
-      cafe_constancia_curso:course,
-      cafe_constancia_meta:meta,
-      cafe_constancia_rostros_validos:validCount,
-      cafe_constancia_calibraciones:calibrationCount,
-      cafe_constancia_prueba:isTest,
-      cafe_constancia_generada_en:new Date().toISOString()
-    });
-    return receipt;
+    Object.assign(row, { cafe_codigo_constancia: code, cafe_constancia_elegible: true,
+      cafe_constancia_generada_en: new Date().toISOString() });
+    return code;
   }
 
   win.CAFEConstancias = Object.freeze({
-    version:'13.6', prepareForExport, countFaceResponses, validFace
+    version:'14.0', prepareEnding, advanceAudit, countFaceResponses, validFace
   });
 })(window);
