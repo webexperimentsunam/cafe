@@ -13,7 +13,7 @@
 // ===== 1. MODO DE EJECUCIÓN =====
 // true: prueba de 3 rostros; false: tarea completa (1,192 rostros).
 // Para iniciar la recolección real, cambia true por false.
-window.CAFE_MODO_PRUEBA = false;
+window.CAFE_MODO_PRUEBA = true;
 
 // ===== 2. CHECKPOINTS =====
 // Cantidad de rostros antes de cada punto de control: de 1 a 200.
