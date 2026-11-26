@@ -3,7 +3,7 @@ if (!window.CAFEAcceso?.invalid) {
 
   // --- FileUploadResponseComponent endpoint (Firebase Cloud Function) ---
   window.JSPSYCH_FILE_UPLOAD_ENDPOINT = 'https://us-central1-test-e4cf9.cloudfunctions.net/apiData'.replace('/apiData', '/uploadParticipantFile');
-  window.JSPSYCH_EXPERIMENT_ID = '17e49b08-828f-4321-b62d-c040a5c1c3ea';
+  window.JSPSYCH_EXPERIMENT_ID = '00f08bb8-86d9-424a-ab46-221104610d0c';
 
 
   function _publicEventId() {
@@ -48,7 +48,7 @@ if (!window.CAFEAcceso?.invalid) {
 
   // --- IndexedDB: unacknowledged events have no age-based expiry ---
   const TrialDB = {
-    dbName: "expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-v14:trials-v1",
+    dbName: "expbuilder:public:00f08bb8-86d9-424a-ab46-221104610d0c:cafe-v14:trials-v1",
     storeName: 'trials',
     counterName: 'session-sequences',
     manifestName: 'event-manifest',
@@ -302,7 +302,7 @@ if (!window.CAFEAcceso?.invalid) {
  
   const Uid = "C71v82VCu8YE7lyNhr02UmB8g5k1";
 
-  const _publicStorageKeys = {"sessionId":"expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-v14:session-id","participant":"expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-v14:participant-number","captchaPassed":"expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-v14:captcha-passed","resumeTrial":"expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-v14:resume-trial","recoverySessions":"expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-v14:recovery-sessions","trialDatabase":"expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-v14:trials-v1"};
+  const _publicStorageKeys = {"sessionId":"expbuilder:public:00f08bb8-86d9-424a-ab46-221104610d0c:cafe-v14:session-id","participant":"expbuilder:public:00f08bb8-86d9-424a-ab46-221104610d0c:cafe-v14:participant-number","captchaPassed":"expbuilder:public:00f08bb8-86d9-424a-ab46-221104610d0c:cafe-v14:captcha-passed","resumeTrial":"expbuilder:public:00f08bb8-86d9-424a-ab46-221104610d0c:cafe-v14:resume-trial","recoverySessions":"expbuilder:public:00f08bb8-86d9-424a-ab46-221104610d0c:cafe-v14:recovery-sessions","trialDatabase":"expbuilder:public:00f08bb8-86d9-424a-ab46-221104610d0c:cafe-v14:trials-v1"};
 
   
   
@@ -372,7 +372,7 @@ const J8e = decideBranch;
 
   
   (() => {
-    const RESUME_TRIAL_KEY = "expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-v14:resume-trial";
+    const RESUME_TRIAL_KEY = "expbuilder:public:00f08bb8-86d9-424a-ab46-221104610d0c:cafe-v14:resume-trial";
     let pendingBranch = null;
     let deferredResume = null;
 
@@ -937,7 +937,7 @@ const J8e = decideBranch;
 
 
   // --- Session Name Configuration ---
-  const _SESSION_NAME_TOKENS = [{"id":"mvr8swb48i6","type":"counter","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"","counterDigits":3},{"id":"mvr8t25p02g","type":"customText","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"CAFE","counterDigits":3},{"id":"mvr8taw8y3w","type":"date","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"","counterDigits":3}];
+  const _SESSION_NAME_TOKENS = [{"id":"mwwr8iyleq9","type":"customText","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"cafe","counterDigits":3},{"id":"mwwr8frrjzv","type":"counter","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"","counterDigits":3},{"id":"mwwr8hg65yz","type":"date","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"","counterDigits":3},{"id":"mwwr8hzhkrn","type":"time","dateFormat":"YYYY-MM-DD","timeFormat":"HH-mm-ss","randomLength":6,"customValue":"","counterDigits":3}];
   const _SESSION_NAME_SEPARATOR = "_";
   function _generateSessionName(participantNumber) {
     if (!_SESSION_NAME_TOKENS || _SESSION_NAME_TOKENS.length === 0) return null;
@@ -1057,14 +1057,20 @@ const J8e = decideBranch;
   
   const _publicSettingsError = function Kde(n){if(!n||typeof n!="object"||Array.isArray(n))return"Complete public settings are required.";function e(a,o){return a!==null&&typeof a=="object"&&!Array.isArray(a)&&Object.keys(a).length===o.length&&Object.keys(a).every(l=>o.includes(l))}const t=(a,o,l)=>typeof a=="number"&&Number.isSafeInteger(a)&&a>=o&&a<=l,{batchConfig:r,recruitmentConfig:i,captchaConfig:s}=n;return e(r,["useIndexedDB","batchSize","resumeTimeoutMinutes"])?typeof r.useIndexedDB!="boolean"?"Use IndexedDB must be a boolean.":t(r.batchSize,0,Number.MAX_SAFE_INTEGER)?t(r.resumeTimeoutMinutes,1,1440)?e(i,["platform","prolificCompletionCode"])?typeof i.platform!="string"||!["none","prolific","mturk"].includes(i.platform)?"Recruitment platform must be none, prolific or mturk.":typeof i.prolificCompletionCode!="string"?"Prolific Completion Code must be a string.":e(s,["enabled","provider","siteKey"])?typeof s.enabled!="boolean"?"CAPTCHA enabled must be a boolean.":typeof s.provider!="string"||!["hcaptcha","recaptcha"].includes(s.provider)?"CAPTCHA provider must be hcaptcha or recaptcha.":typeof s.siteKey!="string"?"CAPTCHA Site Key must be a string.":s.enabled&&!s.siteKey.trim()?"CAPTCHA Site Key is required when CAPTCHA is enabled.":null:"Complete CAPTCHA configuration is required.":"Complete recruitment configuration is required.":"Resume Timeout must be an integer from 1 to 1440 minutes.":"Batch Size must be a nonnegative safe integer.":"Complete batch configuration is required."};
   const _publicWriter = { connectionId: crypto.randomUUID(), writeToken: crypto.randomUUID() + crypto.randomUUID(), connectionGeneration: 0 };
-  // CAFE 14.1: mismo protocolo público v3; diagnóstico sin tokens ni respuestas.
+  // CAFE 14.3: mismo protocolo público v3; diagnóstico sin tokens ni respuestas.
   const _cafeSessionDiagnostics = [];
   window.CAFEInicioDiagnostics = Object.freeze({
-    version: '14.1-eventos', experimentID: window.JSPSYCH_EXPERIMENT_ID,
+    version: '14.3-eventos', experimentID: window.JSPSYCH_EXPERIMENT_ID,
     snapshot: () => _cafeSessionDiagnostics.map(item => ({ ...item }))
   });
-  function _cafeRecordSessionDiagnostic(action, status, message, accepted) {
+  function _cafeRecordSessionDiagnostic(action, status, message, accepted, batchConfig) {
     const item = { at: new Date().toISOString(), action, httpStatus: status, message, accepted };
+    // Valores públicos validados, sin tokens ni respuestas del participante.
+    if (accepted && batchConfig) item.batchConfig = Object.freeze({
+      batchSize: batchConfig.batchSize,
+      resumeTimeoutMinutes: batchConfig.resumeTimeoutMinutes,
+      useIndexedDB: batchConfig.useIndexedDB
+    });
     _cafeSessionDiagnostics.push(item);
     console.info('CAFE: protocolo de sesión', item);
     return item;
@@ -1075,7 +1081,7 @@ const J8e = decideBranch;
     try {
       response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, experimentID: "17e49b08-828f-4321-b62d-c040a5c1c3ea", sessionId: trialSessionId,
+        body: JSON.stringify({ action, experimentID: "00f08bb8-86d9-424a-ab46-221104610d0c", sessionId: trialSessionId,
           sessionProtocolVersion: 3,
           ..._publicWriter, renewConnection, metadata, ...(sessionName && { sessionName }) })
       });
@@ -1103,7 +1109,7 @@ const J8e = decideBranch;
     if (result?.decision && result.sessionProtocolVersion === 3) {
       const settingsError = _publicSettingsError(result.configuration);
       if (settingsError) return fail('Invalid session settings: ' + settingsError);
-      _cafeRecordSessionDiagnostic(action, response.status, 'Configuración v3 recibida', true);
+      _cafeRecordSessionDiagnostic(action, response.status, 'Configuración v3 recibida', true, result.configuration.batchConfig);
       return result;
     }
     return fail('This publication requires the current session service');
@@ -1152,7 +1158,7 @@ const J8e = decideBranch;
       await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "updateSessionName", experimentID: "17e49b08-828f-4321-b62d-c040a5c1c3ea", sessionId, sessionName }),
+        body: JSON.stringify({ action: "updateSessionName", experimentID: "00f08bb8-86d9-424a-ab46-221104610d0c", sessionId, sessionName }),
       });
     } catch (e) {}
   }
@@ -1379,7 +1385,7 @@ const J8e = decideBranch;
 
 
   (async () => {
-    const cafeModeKey = 'expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-v14:cafe-test-mode';
+    const cafeModeKey = 'expbuilder:public:00f08bb8-86d9-424a-ab46-221104610d0c:cafe-v14:cafe-test-mode';
     const oldMode = localStorage.getItem(cafeModeKey);
     // El orden de los índices cambia si cambia el tamaño del bloque o el patrón
     // de calibración. Evitar reanudar un checkpoint con otra configuración.
@@ -1422,11 +1428,15 @@ const J8e = decideBranch;
       resumeTimeoutMinutes: effectiveBatch.resumeTimeoutMinutes, currentBatchNumber: 0 };
     if (!BATCH_CONFIG.useIndexedDB) throw new Error('CAFE requiere activar IndexedDB en la configuración de guardado de ExpBuilder antes de recopilar datos.');
     window.CAFEBatchDiagnostics = Object.freeze({
-      version: '14.1-eventos', experimentID: window.JSPSYCH_EXPERIMENT_ID,
+      version: '14.3-eventos', experimentID: window.JSPSYCH_EXPERIMENT_ID,
       get sessionId() { return trialSessionId; },
       get batchSize() { return BATCH_CONFIG.size; },
       get useIndexedDB() { return BATCH_CONFIG.useIndexedDB; },
       get resumeTimeoutMinutes() { return BATCH_CONFIG.resumeTimeoutMinutes; },
+      get currentBatchNumber() { return BATCH_CONFIG.currentBatchNumber; },
+      snapshot: () => ({ version: '14.3-eventos', experimentID: window.JSPSYCH_EXPERIMENT_ID,
+        batchSize: BATCH_CONFIG.size, resumeTimeoutMinutes: BATCH_CONFIG.resumeTimeoutMinutes,
+        useIndexedDB: BATCH_CONFIG.useIndexedDB, currentBatchNumber: BATCH_CONFIG.currentBatchNumber }),
       get lifecycle() { return _publicSessionState.lifecycle; },
       get localState() { return async () => { const state = await TrialDB.getState(); return { events: state.events.length, pending: await TrialDB.count(), validFaces: state.cafeAudit?.faces?.length || 0, hasEnding: Boolean(state.cafeAudit?.ended) }; }; }
     });
@@ -1478,10 +1488,10 @@ const J8e = decideBranch;
         if (sessionId === trialSessionId) continue;
         const post = async body => {
           const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ experimentID: "17e49b08-828f-4321-b62d-c040a5c1c3ea", sessionId, ...body }) });
+            body: JSON.stringify({ experimentID: "00f08bb8-86d9-424a-ab46-221104610d0c", sessionId, ...body }) });
           if (!response.ok) throw new Error('Earlier session recovery remains pending');
           const result = await response.json();
-          if (!result.success || result.experimentID !== "17e49b08-828f-4321-b62d-c040a5c1c3ea" || result.sessionId !== sessionId) throw new Error('Invalid earlier session receipt');
+          if (!result.success || result.experimentID !== "00f08bb8-86d9-424a-ab46-221104610d0c" || result.sessionId !== sessionId) throw new Error('Invalid earlier session receipt');
           return result;
         };
         const status = await post({ action: 'sessionStatus' });
@@ -1537,7 +1547,7 @@ const J8e = decideBranch;
       if (_publicSessionState.decision !== 'resume_allowed') throw new Error('Session cannot resume: ' + _publicSessionState.decision);
       const connection = _publicSessionState.connection;
       _publicWriter.connectionGeneration = connection.generation;
-      sessionRef = db.ref('session_connections/17e49b08-828f-4321-b62d-c040a5c1c3ea/' + trialSessionId + '/' + _publicWriter.connectionId);
+      sessionRef = db.ref('session_connections/00f08bb8-86d9-424a-ab46-221104610d0c/' + trialSessionId + '/' + _publicWriter.connectionId);
       const presence = { generation: connection.generation, token: _publicWriter.writeToken,
         changedAt: window.firebase.database.ServerValue.TIMESTAMP };
       // Registration must finish before making the connection visible.
@@ -1611,7 +1621,7 @@ const J8e = decideBranch;
       localStorage.setItem(_publicStorageKeys.resumeTrial, JSON.stringify(_backedCheckpoint));
     }
 
-    const resumeRaw = localStorage.getItem("expbuilder:public:17e49b08-828f-4321-b62d-c040a5c1c3ea:cafe-v14:resume-trial");
+    const resumeRaw = localStorage.getItem("expbuilder:public:00f08bb8-86d9-424a-ab46-221104610d0c:cafe-v14:resume-trial");
     const resumeRouteDecision = isResuming && resumeRaw ? _resolveResumeBranch(resumeRaw) : null;
     if (isResuming && resumeRaw && !resumeRouteDecision) throw new Error('The saved navigation checkpoint is invalid');
   
@@ -1675,7 +1685,7 @@ const J8e = decideBranch;
       const batchPromise = (async () => {
         const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: publicRecoveryMode ? 'recoverEvents' : 'appendEvents', experimentID: "17e49b08-828f-4321-b62d-c040a5c1c3ea",
+          body: JSON.stringify({ action: publicRecoveryMode ? 'recoverEvents' : 'appendEvents', experimentID: "00f08bb8-86d9-424a-ab46-221104610d0c",
             sessionId: trialSessionId, ...(typeof _publicWriterPermission === 'function' ? _publicWriterPermission() : {}), data: { protocolVersion: 1, events }, batchNumber })
         });
         if (!response.ok) {
@@ -1685,7 +1695,7 @@ const J8e = decideBranch;
         }
         const result = await response.json();
         const expected = new Map(events.map(event => [event.eventId, event]));
-        if (result?.success !== true || result.experimentID !== "17e49b08-828f-4321-b62d-c040a5c1c3ea"
+        if (result?.success !== true || result.experimentID !== "00f08bb8-86d9-424a-ab46-221104610d0c"
             || result.sessionId !== trialSessionId || !Array.isArray(result.acknowledged)
             || result.acknowledged.length !== events.length) throw new Error('Invalid batch acknowledgement');
         for (const item of result.acknowledged) {
@@ -1818,7 +1828,7 @@ const J8e = decideBranch;
 
     async function _publicExportStatus(action = 'sessionStatus') {
       const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, experimentID: "17e49b08-828f-4321-b62d-c040a5c1c3ea", sessionId: trialSessionId }) });
+        body: JSON.stringify({ action, experimentID: "00f08bb8-86d9-424a-ab46-221104610d0c", sessionId: trialSessionId }) });
       if (!response.ok) throw new Error('Export status could not be checked');
       return response.json();
     }
@@ -1826,7 +1836,7 @@ const J8e = decideBranch;
       const deadline = Date.now() + 600000;
       let delay = 750;
       while (true) {
-        if (result?.success !== true || result.experimentID !== "17e49b08-828f-4321-b62d-c040a5c1c3ea" || result.sessionId !== trialSessionId) {
+        if (result?.success !== true || result.experimentID !== "00f08bb8-86d9-424a-ab46-221104610d0c" || result.sessionId !== trialSessionId) {
           throw new Error('Invalid export status identity');
         }
         const receipt = recovery ? result.export : result.completion;
@@ -1887,7 +1897,7 @@ const J8e = decideBranch;
       publicCompletionRequested = true;
       const response = await fetch("https://us-central1-test-e4cf9.cloudfunctions.net/apiData", {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'completeSession', experimentID: "17e49b08-828f-4321-b62d-c040a5c1c3ea", sessionId: trialSessionId, ...(typeof _publicWriterPermission === 'function' ? _publicWriterPermission() : {}), ...expected })
+        body: JSON.stringify({ action: 'completeSession', experimentID: "00f08bb8-86d9-424a-ab46-221104610d0c", sessionId: trialSessionId, ...(typeof _publicWriterPermission === 'function' ? _publicWriterPermission() : {}), ...expected })
       });
       if (!response.ok) {
         const failure = await response.json().catch(() => ({}));
@@ -1970,7 +1980,7 @@ const J8e = decideBranch;
           data.cafe_curso = window.CAFEAcceso?.curso || '';
           data.cafe_etiqueta_curso = window.CAFEAcceso?.etiquetaCurso || '';
           data.cafe_meta_docente = window.CAFEAcceso?.metaDocente ?? null;
-          data.cafe_version_guardado = '14.1-eventos';
+          data.cafe_version_guardado = '14.3-eventos';
           // Ending must already contain the immutable folio before hashing and sending.
           if (data.trial_name === 'Ending' && data.cafe_modalidad === 'estudiante') {
             const state = await TrialDB.getState();
@@ -1981,7 +1991,7 @@ const J8e = decideBranch;
             });
           }
           data.sessionId = trialSessionId;
-          data.experimentID = "17e49b08-828f-4321-b62d-c040a5c1c3ea";
+          data.experimentID = "00f08bb8-86d9-424a-ab46-221104610d0c";
           const checkpoint = data.builder_id !== undefined && data.builder_id !== null
             ? _createResumeCheckpoint(data) : null;
           if (data.trial_index === 0 && _publicSessionState.sessionProtocolVersion !== 3) {

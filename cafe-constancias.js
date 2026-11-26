@@ -1,11 +1,11 @@
-/* CAFE v14.0 — folio final de participación por curso.
+/* CAFE v14.3 — folio final de participación por curso.
    Un código identifica una sesión, pero la acreditación SIEMPRE depende
    de comprobar en el CSV exportado la cantidad de rostros registrados.
    El código se muestra únicamente cuando el guardado remoto final es confirmado.
 */
 (function (win) {
   'use strict';
-  const EXPERIMENT = '17e49b08-828f-4321-b62d-c040a5c1c3ea';
+  const EXPERIMENT = '00f08bb8-86d9-424a-ab46-221104610d0c';
   const BASE = 'expbuilder:public:' + EXPERIMENT + ':cafe-v14:folio:v1:';
   const EMOTIONS = new Set(['Alegría','Tristeza','Enojo','Miedo','Asco','Sorpresa','Neutral']);
   const REQUIRED = ['question1','question2','question3','question4','question5'];
@@ -98,6 +98,6 @@
   }
 
   win.CAFEConstancias = Object.freeze({
-    version:'14.0', prepareEnding, advanceAudit, countFaceResponses, validFace
+    version:'14.3', prepareEnding, advanceAudit, countFaceResponses, validFace
   });
 })(window);
